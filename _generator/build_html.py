@@ -47,8 +47,8 @@ def speech_texts(data):
     for u in data['units']:
         for b in u['theory']:
             if b['type'] == 'table':
-                vocab = b['head'][0] == 'Cụm từ'
-                if vocab or re.search(r'câu trả lời mở rộng', b['head'][-1], re.I):
+                vocab = b['head'][0] in ('Cụm từ', 'Phrase')
+                if vocab or re.search(r'câu trả lời mở rộng|extended answer', b['head'][-1], re.I):
                     out += [(text_of(r['cells'][-1]), ANSWER_VOICE) for r in b['rows']]
             elif b['type'] == 'samples':
                 out += [(sample_speech(x), ANSWER_VOICE) for x in b['items']]
@@ -78,6 +78,52 @@ def api_url(env_path):
     raise SystemExit('VITE_API_URL not found in ' + env_path)
 
 
+VI_CHARS = re.compile('[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]', re.I)
+
+
+def apply_english(data, en):
+    """Shows the page's instructions in English (teacher's choice); meanings and theory stay
+    Vietnamese. Fails on a Vietnamese instruction, hint or cue that has no English version."""
+    if not en:
+        return
+    missing = []
+
+    def tr(s, required=True):
+        if s in en:
+            return en[s]
+        if required and VI_CHARS.search(s):
+            missing.append(s)
+        return s
+
+    data['cover'] = [data['cover'][0]] + [tr(c) for c in data['cover'][1:]]
+    for u in data['units']:
+        u['name'] = tr(u['name'])
+        for b in u['theory']:
+            if b['type'] == 'table':  # headers of theory tables in Vietnamese stay Vietnamese
+                b['head'] = [tr(h, required=False) for h in b['head']]
+        for ex in u['exercises']:
+            ex['title'], ex['intro'] = tr(ex['title']), tr(ex['intro'])
+            for it in ex['items']:
+                if it.get('hint'):
+                    it['hint'] = tr(it['hint'])
+                if it.get('cue') and it['kind'] == 'choice':
+                    it['cue'] = tr(it['cue'])
+    if missing:
+        raise SystemExit('No English for: ' + ' | '.join(missing))
+
+
+def suggest_only(data):
+    """Units 2 and later, exercises 2 and 3: one Suggestion, no alternative (teacher's choice)."""
+    for u in data['units']:
+        if u['num'] < 2:
+            continue
+        for ex in u['exercises'][1:3]:
+            for it in ex['items']:
+                if it['kind'] == 'write':
+                    it.pop('alt', None)
+                    it['suggest'] = True
+
+
 def main(src, dst, store, env_path=None):
     data = json.loads(pathlib.Path(src).read_text(encoding='utf-8'))
     edits_path = pathlib.Path(src).with_suffix('.edits.json')
@@ -94,6 +140,9 @@ def main(src, dst, store, env_path=None):
                 raise SystemExit(f'replace: not found: {old[:60]}')
             raw = raw.replace(o, n)
         data = json.loads(raw)
+        apply_english(data, edits.get('en', {}))
+        if edits.get('suggestOnly'):
+            suggest_only(data)
     for k in ('bank', 'bankIntro', 'bankTitle'):  # the question bank is not shown (teacher's choice)
         data.pop(k, None)
     audio, needed = {}, {}

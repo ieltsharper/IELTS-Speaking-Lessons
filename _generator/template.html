@@ -162,7 +162,7 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 <div class="topbar">
   <div class="wrap">
     <a class="brand" href="https://ieltsharper.github.io/portal/"><span class="brand-mark" aria-hidden="true">IH</span>IELTS Harper Portal</a>
-    <a class="topbar-link" href="https://ieltsharper.github.io/portal/">&larr; Về portal</a>
+    <a class="topbar-link" href="https://ieltsharper.github.io/portal/">&larr; Back to the portal</a>
   </div>
 </div>
 <header class="mast">
@@ -172,13 +172,13 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
       <h1 id="title"></h1>
       <div id="cover"></div>
       <div class="progress-all"><span id="progressText"></span><div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
-        <button class="btn" id="reset" type="button">Xoá bài đã làm</button></div>
+        <button class="btn" id="reset" type="button">Clear my work</button></div>
     </div>
   </div>
 </header>
-<nav class="tabs" aria-label="Các phần"><div class="wrap" id="tabs"></div></nav>
+<nav class="tabs" aria-label="Sections"><div class="wrap" id="tabs"></div></nav>
 <main><div class="wrap" id="main"></div></main>
-<footer><div class="wrap">Câu bạn nộp được lưu trên trình duyệt này. Nếu bạn đã đăng nhập IELTS Harper Portal, mỗi bài tập làm xong được gửi cho giáo viên để nhận xét.</div></footer>
+<footer><div class="wrap">Your answers are saved in this browser. If you are signed in to IELTS Harper Portal, each finished exercise is sent to your teacher for feedback.</div></footer>
 
 <script type="application/json" id="data">__DATA__</script>
 <script type="application/json" id="audio">__AUDIO__</script>
@@ -194,7 +194,7 @@ function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } cat
 
 var $ = function(s, r){ return (r||document).querySelector(s); };
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-function dots(n){ return n ? '<span class="lv" title="Cấp độ ' + n + '">' + '●'.repeat(n) + '</span>' : ''; }
+function dots(n){ return n ? '<span class="lv" title="Level ' + n + '">' + '●'.repeat(n) + '</span>' : ''; }
 function textOf(html){ var t = document.createElement('div'); t.innerHTML = html; return t.textContent; }
 
 /* ---------- recorded audio for the English examples (audio/<id>.mp3, made by make_audio.py) ---------- */
@@ -203,7 +203,7 @@ var player = new Audio(), playing = null;
 function speakBtn(text){
   var id = AUDIO[text];
   if (!id) return '';
-  return '<button type="button" class="speak" data-audio="' + id + '" aria-label="Nghe: ' + esc(text) + '" title="Nghe">🔊</button>';
+  return '<button type="button" class="speak" data-audio="' + id + '" aria-label="Listen: ' + esc(text) + '" title="Listen">🔊</button>';
 }
 function stopAudio(){ player.pause(); if (playing) playing.classList.remove('on'); playing = null; }
 player.addEventListener('ended', stopAudio);
@@ -223,11 +223,11 @@ function isDone(id){ return !!(state.sub[id] || state.choice[id] || state.seen[i
 var ALL = [].concat.apply([], D.units.map(ids));
 function updateProgress(){
   var n = ALL.filter(isDone).length;
-  $('#progressText').textContent = 'Đã làm ' + n + '/' + ALL.length + ' câu';
+  $('#progressText').textContent = 'Done: ' + n + '/' + ALL.length + ' items';
   $('#progressBar').style.width = (100 * n / ALL.length) + '%';
 }
 $('#reset').addEventListener('click', function(){
-  if (!confirm('Xoá toàn bộ câu đã viết, đã nộp và đã chọn trên trình duyệt này?')) return;
+  if (!confirm('Clear everything you wrote, submitted and chose in this browser?')) return;
   state = blank(); save(); render();
 });
 
@@ -236,7 +236,7 @@ $('#title').textContent = D.cover[0];
 $('#cover').innerHTML = D.cover.slice(1).map(function(c, i, a){
   return '<p class="standfirst' + (i === a.length - 1 ? ' small' : '') + '">' + esc(c) + '</p>';
 }).join('');
-var TABS = [{id:'huong-dan', label:'Hướng dẫn'}];
+var TABS = [{id:'huong-dan', label:'Guide'}];
 D.units.forEach(function(u){ TABS.push({id:'unit-' + u.num, label:'Unit ' + u.num + ' · ' + u.name, unit:u}); });
 $('#tabs').innerHTML = TABS.map(function(t){ return '<a href="#' + t.id + '">' + esc(t.label) + '</a>'; }).join('');
 
@@ -261,7 +261,7 @@ function renderGuide(){
     s += '<p class="part-title">' + esc(p.title) + '</p><div class="boxes">' + p.units.map(function(n){
       var u = D.units.find(function(x){ return x.num === n; });
       var all = ids(u), done = all.filter(isDone).length;
-      return '<a class="card" style="text-decoration:none;color:inherit;display:block;margin:0" href="#unit-' + n + '"><h4 style="color:var(--heading)">Unit ' + n + ' · ' + esc(u.name) + '</h4><span class="note">Đã làm ' + done + '/' + all.length + ' câu</span></a>';
+      return '<a class="card" style="text-decoration:none;color:inherit;display:block;margin:0" href="#unit-' + n + '"><h4 style="color:var(--heading)">Unit ' + n + ' · ' + esc(u.name) + '</h4><span class="note">Done: ' + done + '/' + all.length + ' câu</span></a>';
     }).join('') + '</div>';
   });
   return s;
@@ -269,7 +269,7 @@ function renderGuide(){
 
 /* ---------- theory ---------- */
 function renderTable(b){
-  var vocab = b.head[0] === 'Cụm từ', speakLast = vocab || /câu trả lời mở rộng/i.test(b.head[b.head.length - 1]);
+  var vocab = b.head[0] === 'Cụm từ' || b.head[0] === 'Phrase', speakLast = vocab || /câu trả lời mở rộng|extended answer/i.test(b.head[b.head.length - 1]);
   var rows = b.rows.filter(function(r){ return !filter || !r.level || r.level === filter; });
   return '<div class="tablewrap"><table><thead><tr>' + b.head.map(function(h){ return '<th scope="col">' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
     rows.map(function(r){
@@ -307,18 +307,18 @@ function renderTheory(u){
 }
 
 /* ---------- exercises ---------- */
-var LINES = [['short', 'Câu ngắn'], ['expand', 'Mở rộng'], ['rote', 'Câu nghe như học thuộc'], ['trait', 'Đặc điểm cá nhân'], ['use', 'Dùng'], ['hint', 'Gợi ý']];
+var LINES = [['short', 'Short answer'], ['expand', 'Extend'], ['rote', 'Memorised answer'], ['trait', 'Personal detail'], ['use', 'Use'], ['hint', 'Hint']];
 function answerHtml(it, id){
   var s = '';
-  if (state.sub[id]) s += '<div class="note">Câu bạn đã nộp:</div><div class="mine" lang="en">' + esc(state.sub[id]) + '</div>';
-  s += '<div class="main">' + (it.model ? '<span class="label">Câu mẫu:</span> ' : '<span class="label">Đáp án:</span> ') + it.answer + speakBtn(textOf(it.answer)) + '</div>';
-  if (it.alt) s += '<div class="alt"><span class="label">Cũng chấp nhận:</span> ' + it.alt + speakBtn(textOf(it.alt)) + '</div>';
+  if (state.sub[id]) s += '<div class="note">Your answer:</div><div class="mine" lang="en">' + esc(state.sub[id]) + '</div>';
+  s += '<div class="main">' + (it.suggest ? '<span class="label">Suggestion:</span> ' : it.model ? '<span class="label">Model answer:</span> ' : '<span class="label">Answer:</span> ') + it.answer + speakBtn(textOf(it.answer)) + '</div>';
+  if (it.alt) s += '<div class="alt"><span class="label">Also accepted:</span> ' + it.alt + speakBtn(textOf(it.alt)) + '</div>';
   if (it.note) s += '<div class="note" style="margin-top:6px">' + it.note + '</div>';
   return s;
 }
 function choiceResult(it, id){
   var pick = state.choice[id];
-  return '<div class="verdict ' + (pick === it.correct ? 'ok">✓ Đúng' : 'no">✗ Chưa đúng. Đáp án: ' + it.correct) + '</div><div class="note">' + it.note + '</div>';
+  return '<div class="verdict ' + (pick === it.correct ? 'ok">✓ Correct' : 'no">✗ Not quite. Answer: ' + it.correct) + '</div><div class="note">' + it.note + '</div>';
 }
 function renderItem(it, id, i){
   var head = it.q != null
@@ -332,22 +332,22 @@ function renderItem(it, id, i){
     (lines ? '<div class="lines">' + lines + '</div>' : '');
   if (it.kind === 'choice') {
     var pick = state.choice[id];
-    s += '<div class="opts" role="radiogroup" aria-label="Chọn A, B hoặc C">' + it.options.map(function(o){
+    s += '<div class="opts" role="radiogroup" aria-label="Choose A, B or C">' + it.options.map(function(o){
       var cls = pick ? (o.letter === it.correct ? ' right' : o.letter === pick ? ' wrong' : '') : '';
       return '<label class="opt' + cls + '"><input type="radio" name="c-' + id + '" value="' + o.letter + '"' + (pick === o.letter ? ' checked' : '') + '><b>' + o.letter + '</b><span lang="en">' + esc(o.text) + '</span></label>';
-    }).join('') + '</div><div class="work"><div class="actions"><button type="button" class="btn primary" data-choose="' + id + '"' + (pick ? '' : ' disabled') + '>' + (pick ? 'Nộp lại' : 'Nộp') + '</button></div>' +
+    }).join('') + '</div><div class="work"><div class="actions"><button type="button" class="btn primary" data-choose="' + id + '"' + (pick ? '' : ' disabled') + '>' + (pick ? 'Submit again' : 'Submit') + '</button></div>' +
       '<div class="answer" id="a-' + id + '"' + (pick ? '' : ' hidden') + '>' + (pick ? choiceResult(it, id) : '') + '</div></div>';
   } else if (it.kind === 'read') {
     var seen = !!state.seen[id];
-    s += '<div class="work"><div class="actions"><button type="button" class="btn primary" data-see="' + id + '" aria-expanded="' + seen + '">' + (seen ? 'Ẩn đáp án' : 'Xem đáp án') + '</button></div>' +
+    s += '<div class="work"><div class="actions"><button type="button" class="btn primary" data-see="' + id + '" aria-expanded="' + seen + '">' + (seen ? 'Hide answer' : 'Show answer') + '</button></div>' +
       '<div class="answer" id="a-' + id + '"' + (seen ? '' : ' hidden') + '>' + answerHtml(it, id) + '</div></div>';
   } else {
     var draft = state.draft[id] != null ? state.draft[id] : (state.sub[id] || '');
     var sub = !!state.sub[id];
-    s += '<div class="work"><label class="note" for="t-' + id + '">Viết câu trả lời của bạn</label>' +
+    s += '<div class="work"><label class="note" for="t-' + id + '">Write your answer</label>' +
       '<textarea id="t-' + id + '" data-text="' + id + '" rows="2" spellcheck="true" lang="en">' + esc(draft) + '</textarea>' +
-      '<div class="actions"><button type="button" class="btn primary" data-submit="' + id + '"' + (draft.trim() ? '' : ' disabled') + '>' + (sub ? 'Nộp lại' : 'Nộp') + '</button>' +
-      (sub ? '' : '<span class="note">Nộp câu của bạn để xem đáp án.</span>') + '</div>' +
+      '<div class="actions"><button type="button" class="btn primary" data-submit="' + id + '"' + (draft.trim() ? '' : ' disabled') + '>' + (sub ? 'Submit again' : 'Submit') + '</button>' +
+      (sub ? '' : '<span class="note">Submit your answer to see ' + (it.suggest ? 'a suggestion' : 'the answer') + '.</span>') + '</div>' +
       '<div class="answer" id="a-' + id + '"' + (sub ? '' : ' hidden') + '>' + (sub ? answerHtml(it, id) : '') + '</div></div>';
   }
   return s + '</div>';
@@ -365,7 +365,7 @@ function renderExercise(u, k){
     shown++;
     s += renderItem(it, u.num + '-' + k + '-' + i, i);
   });
-  if (!shown) s += '<p class="empty">Không có câu nào ở cấp độ này.</p>';
+  if (!shown) s += '<p class="empty">No items at this level.</p>';
   s += '<div class="send-box" data-ex="' + u.num + '-' + k + '">' + sendBox(u.num + '-' + k) + '</div>';
   return s;
 }
@@ -403,7 +403,7 @@ function payloadFor(key){
         var opt = function(l){ var o = it.options.find(function(o){ return o.letter === l; }); return l + '. ' + (o ? o.text : ''); };
         return {prompt: promptOf(it), answer: opt(state.choice[id]), model: opt(it.correct), correct: state.choice[id] === it.correct};
       }
-      return {prompt: promptOf(it), answer: state.sub[id], model: textOf(it.answer) + (it.alt ? '\nCũng chấp nhận: ' + textOf(it.alt) : ''), correct: null};
+      return {prompt: promptOf(it), answer: state.sub[id], model: textOf(it.answer) + (it.alt ? '\nAlso accepted: ' + textOf(it.alt) : ''), correct: null};
     })
   };
 }
@@ -411,15 +411,15 @@ function sendBox(key){
   var x = exParts(key);
   if (!sendable(x.ex) || !API_URL) return '';
   var c = comments[key], s = send[key] || {}, out = '';
-  if (c && c.comment) out += '<div class="teacher-note"><b>Nhận xét của giáo viên</b><div>' + esc(c.comment) + '</div></div>';
+  if (c && c.comment) out += '<div class="teacher-note"><b>Teacher&rsquo;s feedback</b><div>' + esc(c.comment) + '</div></div>';
   var msg;
-  if (!token() || s.status === 'login') msg = '<a href="' + PORTAL + '" target="_blank" rel="noopener">Đăng nhập portal</a> để bài làm được gửi cho giáo viên khi bạn làm xong.';
-  else if (s.status === 'sending') msg = 'Đang gửi bài cho giáo viên…';
-  else if (s.status === 'forbidden') msg = 'Bài tập này chưa được mở cho tài khoản portal của bạn, nên chưa gửi được cho giáo viên.';
-  else if (s.status === 'error') msg = 'Chưa gửi được (' + esc(s.message) + '). <button type="button" class="btn" data-send="' + key + '">Gửi lại</button>';
-  else if (state.sent[key] && state.dirty[key]) msg = 'Bạn đã sửa bài sau khi gửi. <button type="button" class="btn primary" data-send="' + key + '">Gửi lại cho giáo viên</button>';
-  else if (state.sent[key]) msg = '✓ Đã gửi cho giáo viên lúc ' + esc(new Date(state.sent[key]).toLocaleString('vi-VN')) + '.' + (c && c.comment ? '' : ' Giáo viên sẽ nhận xét trên portal.');
-  else msg = 'Làm xong ' + doneCount(key) + '/' + x.ex.items.length + ' câu. Làm hết thì bài sẽ tự gửi cho giáo viên.';
+  if (!token() || s.status === 'login') msg = '<a href="' + PORTAL + '" target="_blank" rel="noopener">Sign in to the portal</a> so your work is sent to your teacher when you finish.';
+  else if (s.status === 'sending') msg = 'Sending to your teacher…';
+  else if (s.status === 'forbidden') msg = 'This exercise is not open to your portal account yet, so it cannot be sent to your teacher.';
+  else if (s.status === 'error') msg = 'Not sent yet (' + esc(s.message) + '). <button type="button" class="btn" data-send="' + key + '">Try again</button>';
+  else if (state.sent[key] && state.dirty[key]) msg = 'You changed your answers after sending. <button type="button" class="btn primary" data-send="' + key + '">Send again to your teacher</button>';
+  else if (state.sent[key]) msg = '✓ Sent to your teacher on ' + esc(new Date(state.sent[key]).toLocaleString('en-GB')) + '.' + (c && c.comment ? '' : ' Your teacher will give feedback in the portal.');
+  else msg = 'Done: ' + doneCount(key) + '/' + x.ex.items.length + '. When you finish them all, this exercise is sent to your teacher automatically.';
   return out + '<p class="send-msg">' + msg + '</p>';
 }
 function refreshSendBoxes(key){
@@ -432,7 +432,7 @@ function sendExercise(key){
     state.sent[key] = row.submittedAt; delete state.dirty[key]; save();
     send[key] = {}; comments[key] = {comment: row.comment, commentAt: row.commentAt};
   }).catch(function(e){
-    send[key] = e.code === 'unauthorized' ? {status: 'login'} : e.code === 'forbidden' ? {status: 'forbidden'} : {status: 'error', message: e.message || 'lỗi mạng'};
+    send[key] = e.code === 'unauthorized' ? {status: 'login'} : e.code === 'forbidden' ? {status: 'forbidden'} : {status: 'error', message: e.message || 'network error'};
   }).then(function(){ refreshSendBoxes(key); });
 }
 function afterAnswer(id){
@@ -458,19 +458,19 @@ function loadComments(){
 }
 
 function renderUnit(u, part){
-  var parts = [['ly-thuyet', 'A. Lý thuyết']].concat(u.exercises.map(function(_, k){ return ['bai-tap-' + (k + 1), 'Bài tập ' + (k + 1)]; }));
+  var parts = [['ly-thuyet', 'A. Theory']].concat(u.exercises.map(function(_, k){ return ['bai-tap-' + (k + 1), 'Exercise ' + (k + 1)]; }));
   if (!parts.some(function(p){ return p[0] === part; })) part = 'ly-thuyet';
   var s = '<h2>Unit ' + u.num + ' · ' + esc(u.name) + '</h2>';
-  s += '<div class="subnav" role="group" aria-label="Phần của Unit">' + parts.map(function(p){
+  s += '<div class="subnav" role="group" aria-label="Unit sections">' + parts.map(function(p){
     var n = p[0] === 'ly-thuyet' ? '' : (function(){ var k = +p[0].slice(-1), all = u.exercises[k - 1].items.map(function(_, i){ return u.num + '-' + k + '-' + i; }); return ' <small>' + all.filter(isDone).length + '/' + all.length + '</small>'; })();
     return '<a class="chip" style="text-decoration:none" href="#unit-' + u.num + '/' + p[0] + '" aria-pressed="' + (p[0] === part) + '">' + p[1] + n + '</a>';
-  }).join('') + '<span class="filter-label">Cấp độ:</span>' +
-    [[0, 'Tất cả'], [1, '● 5.0-6.0'], [2, '●● 6.0-6.5'], [3, '●●● 7.0-7.5']].map(function(f){
+  }).join('') + '<span class="filter-label">Level:</span>' +
+    [[0, 'All'], [1, '● 5.0-6.0'], [2, '●● 6.0-6.5'], [3, '●●● 7.0-7.5']].map(function(f){
       return '<button type="button" class="chip" data-filter="' + f[0] + '" aria-pressed="' + (filter === f[0]) + '">' + f[1] + '</button>';
     }).join('') + '</div>';
   s += part === 'ly-thuyet' ? renderTheory(u) : renderExercise(u, +part.slice(-1));
   var i = parts.findIndex(function(p){ return p[0] === part; });
-  if (i < parts.length - 1) s += '<p style="text-align:right"><a class="btn primary" style="text-decoration:none;display:inline-block" href="#unit-' + u.num + '/' + parts[i + 1][0] + '">Tiếp: ' + parts[i + 1][1] + ' →</a></p>';
+  if (i < parts.length - 1) s += '<p style="text-align:right"><a class="btn primary" style="text-decoration:none;display:inline-block" href="#unit-' + u.num + '/' + parts[i + 1][0] + '">Next: ' + parts[i + 1][1] + ' →</a></p>';
   return s;
 }
 
