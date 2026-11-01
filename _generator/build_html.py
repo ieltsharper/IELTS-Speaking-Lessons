@@ -1,6 +1,9 @@
 """Fills template.html with a lesson's JSON and lists the audio clips the page needs.
 
-Usage: python -I build_html.py <lesson.json> <out.html> <localStorage key>
+Usage: python -I build_html.py <lesson.json> <out.html> <localStorage key> [portal .env.pages]
+
+With the portal's .env.pages (VITE_API_URL = its Apps Script /exec address), the page sends each
+finished exercise to the portal (workbook.submit) for the teacher to comment on.
 
 Every 🔊 button plays audio/<id>.mp3. The page looks the id up by the exact text its script
 derives (see speakBtn calls in template.html); speech_texts() below derives the same texts.
@@ -66,7 +69,16 @@ def clip_id(text, voice):
     return hashlib.sha1(f'{voice}|{spoken(text)}'.encode('utf-8')).hexdigest()[:12]
 
 
-def main(src, dst, store):
+def api_url(env_path):
+    if not env_path:
+        return ''
+    for line in pathlib.Path(env_path).read_text(encoding='utf-8').splitlines():
+        if line.startswith('VITE_API_URL='):
+            return line.split('=', 1)[1].strip()
+    raise SystemExit('VITE_API_URL not found in ' + env_path)
+
+
+def main(src, dst, store, env_path=None):
     data = json.loads(pathlib.Path(src).read_text(encoding='utf-8'))
     edits_path = pathlib.Path(src).with_suffix('.edits.json')
     if edits_path.exists():  # the teacher's changes on top of the .docx
@@ -103,6 +115,7 @@ def main(src, dst, store):
             .replace('__TITLE__', data['cover'][0])
             .replace('__STORE__', store)
             .replace('__AUDIO_DIR__', 'audio/')
+            .replace('__API_URL__', api_url(env_path))
             .replace('__AUDIO__', js(audio))
             .replace('__DATA__', js(data)))
     pathlib.Path(dst).write_text(page, encoding='utf-8', newline='\n')
@@ -110,4 +123,4 @@ def main(src, dst, store):
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:4])
+    main(*sys.argv[1:5])

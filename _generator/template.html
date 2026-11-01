@@ -150,6 +150,12 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 .mine{background:var(--page);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px;white-space:pre-wrap}
 .part-title{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
 .read-cue{font-size:1.08rem}
+.send-box{margin:0 0 14px}
+.send-box:empty{display:none}
+.send-msg{margin:0;padding:10px 14px;border:1px dashed var(--line-strong);border-radius:12px;background:var(--card);font-size:.92rem;color:var(--muted)}
+.send-msg .btn{margin-left:6px}
+.teacher-note{border-left:4px solid var(--brand);background:var(--brand-soft);border-radius:10px;padding:10px 14px;margin-bottom:8px;white-space:pre-wrap}
+.teacher-note b{color:var(--brand);display:block;margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -172,7 +178,7 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 </header>
 <nav class="tabs" aria-label="Các phần"><div class="wrap" id="tabs"></div></nav>
 <main><div class="wrap" id="main"></div></main>
-<footer><div class="wrap">Câu bạn nộp được lưu trên trình duyệt này để bạn so với đáp án; không gửi đi đâu.</div></footer>
+<footer><div class="wrap">Câu bạn nộp được lưu trên trình duyệt này. Nếu bạn đã đăng nhập IELTS Harper Portal, mỗi bài tập làm xong được gửi cho giáo viên để nhận xét.</div></footer>
 
 <script type="application/json" id="data">__DATA__</script>
 <script type="application/json" id="audio">__AUDIO__</script>
@@ -182,7 +188,7 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 var D = JSON.parse(document.getElementById('data').textContent);
 var STORE = '__STORE__';
 var state = load();
-function blank(){ return {draft:{}, sub:{}, choice:{}, seen:{}}; }
+function blank(){ return {draft:{}, sub:{}, choice:{}, seen:{}, sent:{}, dirty:{}}; }
 function load(){ try { var s = JSON.parse(localStorage.getItem(STORE)); return s && s.sub ? s : blank(); } catch(e){ return blank(); } }
 function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){} }
 
@@ -353,13 +359,102 @@ function findItem(id){
 function renderExercise(u, k){
   var ex = u.exercises[k - 1];
   var s = '<h3>' + esc(ex.title) + '</h3><p class="lede">' + ex.intro + '</p>', shown = 0;
+  s += '<div class="send-box" data-ex="' + u.num + '-' + k + '">' + sendBox(u.num + '-' + k) + '</div>';
   ex.items.forEach(function(it, i){
     if (filter && it.level !== filter) return;
     shown++;
     s += renderItem(it, u.num + '-' + k + '-' + i, i);
   });
   if (!shown) s += '<p class="empty">Không có câu nào ở cấp độ này.</p>';
+  s += '<div class="send-box" data-ex="' + u.num + '-' + k + '">' + sendBox(u.num + '-' + k) + '</div>';
   return s;
+}
+
+/* ---------- sending finished exercises to the teacher (IELTS Harper Portal) ---------- */
+// This page and the portal are on the same site, so the student's portal sign-in is readable here.
+var API_URL = '__API_URL__', PORTAL = 'https://ieltsharper.github.io/portal/';
+var send = {}; // exercise key -> {status: 'sending'|'error'|'forbidden'|'login', message}
+var comments = {}; // exercise key -> {comment, commentAt}
+state.sent = state.sent || {}; state.dirty = state.dirty || {};
+function token(){ try { return localStorage.getItem('portal.session'); } catch(e){ return null; } }
+function apiCall(action, payload){
+  return fetch(API_URL, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify({action: action, token: token(), payload: payload}), redirect: 'follow', credentials: 'omit'})
+    .then(function(r){ return r.json(); })
+    .then(function(env){ if (env.ok) return env.data; var e = new Error(env.error.message); e.code = env.error.code; throw e; });
+}
+function exParts(key){ var p = key.split('-'), u = D.units.find(function(x){ return x.num === +p[0]; }); return {u: u, k: +p[1], ex: u.exercises[+p[1] - 1]}; }
+function sendable(ex){ return ex.items.some(function(it){ return it.kind !== 'read'; }); }
+function finished(key){ var x = exParts(key); return x.ex.items.every(function(_, i){ var id = key + '-' + i; return state.sub[id] || state.choice[id]; }); }
+function doneCount(key){ var x = exParts(key); return x.ex.items.filter(function(_, i){ var id = key + '-' + i; return state.sub[id] || state.choice[id]; }).length; }
+function promptOf(it){
+  var head = it.q != null ? (it.qnum ? it.qnum + ': ' : '') + it.q : textOf(it.cue);
+  var lines = LINES.filter(function(l){ return it[l[0]]; }).map(function(l){ return l[1] + ': ' + textOf(it[l[0]]); });
+  return [head].concat(lines).join('\n');
+}
+function payloadFor(key){
+  var x = exParts(key);
+  return {
+    url: location.href.split('#')[0], lessonTitle: D.cover[0], exercise: key,
+    exerciseTitle: 'Unit ' + x.u.num + ' · ' + x.ex.title,
+    answers: x.ex.items.map(function(it, i){
+      var id = key + '-' + i;
+      if (it.kind === 'choice') {
+        var opt = function(l){ var o = it.options.find(function(o){ return o.letter === l; }); return l + '. ' + (o ? o.text : ''); };
+        return {prompt: promptOf(it), answer: opt(state.choice[id]), model: opt(it.correct), correct: state.choice[id] === it.correct};
+      }
+      return {prompt: promptOf(it), answer: state.sub[id], model: textOf(it.answer) + (it.alt ? '\nCũng chấp nhận: ' + textOf(it.alt) : ''), correct: null};
+    })
+  };
+}
+function sendBox(key){
+  var x = exParts(key);
+  if (!sendable(x.ex) || !API_URL) return '';
+  var c = comments[key], s = send[key] || {}, out = '';
+  if (c && c.comment) out += '<div class="teacher-note"><b>Nhận xét của giáo viên</b><div>' + esc(c.comment) + '</div></div>';
+  var msg;
+  if (!token() || s.status === 'login') msg = '<a href="' + PORTAL + '" target="_blank" rel="noopener">Đăng nhập portal</a> để bài làm được gửi cho giáo viên khi bạn làm xong.';
+  else if (s.status === 'sending') msg = 'Đang gửi bài cho giáo viên…';
+  else if (s.status === 'forbidden') msg = 'Bài tập này chưa được mở cho tài khoản portal của bạn, nên chưa gửi được cho giáo viên.';
+  else if (s.status === 'error') msg = 'Chưa gửi được (' + esc(s.message) + '). <button type="button" class="btn" data-send="' + key + '">Gửi lại</button>';
+  else if (state.sent[key] && state.dirty[key]) msg = 'Bạn đã sửa bài sau khi gửi. <button type="button" class="btn primary" data-send="' + key + '">Gửi lại cho giáo viên</button>';
+  else if (state.sent[key]) msg = '✓ Đã gửi cho giáo viên lúc ' + esc(new Date(state.sent[key]).toLocaleString('vi-VN')) + '.' + (c && c.comment ? '' : ' Giáo viên sẽ nhận xét trên portal.');
+  else msg = 'Làm xong ' + doneCount(key) + '/' + x.ex.items.length + ' câu. Làm hết thì bài sẽ tự gửi cho giáo viên.';
+  return out + '<p class="send-msg">' + msg + '</p>';
+}
+function refreshSendBoxes(key){
+  document.querySelectorAll('.send-box[data-ex="' + key + '"]').forEach(function(b){ b.innerHTML = sendBox(key); });
+}
+function sendExercise(key){
+  if (!API_URL || !token()) { refreshSendBoxes(key); return; }
+  send[key] = {status: 'sending'}; refreshSendBoxes(key);
+  apiCall('workbook.submit', payloadFor(key)).then(function(row){
+    state.sent[key] = row.submittedAt; delete state.dirty[key]; save();
+    send[key] = {}; comments[key] = {comment: row.comment, commentAt: row.commentAt};
+  }).catch(function(e){
+    send[key] = e.code === 'unauthorized' ? {status: 'login'} : e.code === 'forbidden' ? {status: 'forbidden'} : {status: 'error', message: e.message || 'lỗi mạng'};
+  }).then(function(){ refreshSendBoxes(key); });
+}
+function afterAnswer(id){
+  var key = id.split('-').slice(0, 2).join('-');
+  if (!sendable(exParts(key).ex)) return;
+  if (state.sent[key]) { state.dirty[key] = 1; save(); refreshSendBoxes(key); return; }
+  if (finished(key)) sendExercise(key); else refreshSendBoxes(key);
+}
+function loadComments(){
+  if (!API_URL || !token()) return;
+  apiCall('workbook.mine', {url: location.href.split('#')[0]}).then(function(rows){
+    rows.forEach(function(r){
+      comments[r.exercise] = {comment: r.comment, commentAt: r.commentAt};
+      if (!state.sent[r.exercise]) { state.sent[r.exercise] = r.submittedAt; save(); }
+    });
+    document.querySelectorAll('.send-box').forEach(function(b){ b.innerHTML = sendBox(b.getAttribute('data-ex')); });
+    // Exercises finished before signing in are sent now.
+    D.units.forEach(function(u){ u.exercises.forEach(function(ex, k){
+      var key = u.num + '-' + (k + 1);
+      if (sendable(ex) && !state.sent[key] && finished(key)) sendExercise(key);
+    }); });
+  }).catch(function(){});
 }
 
 function renderUnit(u, part){
@@ -415,16 +510,22 @@ $('#main').addEventListener('click', function(e){
     id = b.getAttribute('data-submit');
     var t = document.getElementById('t-' + id).value.trim();
     if (!t) return;
+    var changed = state.sub[id] !== t;
     state.sub[id] = t; delete state.draft[id]; save(); rerenderItem(id);
     var a = document.getElementById('a-' + id); if (a) a.scrollIntoView({block: 'nearest'});
+    if (changed) afterAnswer(id);
     return;
   }
   if ((b = e.target.closest('[data-choose]'))) {
     id = b.getAttribute('data-choose');
     var r = document.querySelector('input[name="c-' + id + '"]:checked');
     if (!r) return;
-    state.choice[id] = r.value; save(); rerenderItem(id); return;
+    var changedChoice = state.choice[id] !== r.value;
+    state.choice[id] = r.value; save(); rerenderItem(id);
+    if (changedChoice) afterAnswer(id);
+    return;
   }
+  if ((b = e.target.closest('[data-send]'))) { sendExercise(b.getAttribute('data-send')); return; }
   if ((b = e.target.closest('[data-see]'))) {
     id = b.getAttribute('data-see');
     if (state.seen[id]) delete state.seen[id]; else state.seen[id] = 1;
@@ -447,6 +548,7 @@ $('#main').addEventListener('input', function(e){
   }
 });
 render();
+loadComments();
 })();
 </script>
 </body>
