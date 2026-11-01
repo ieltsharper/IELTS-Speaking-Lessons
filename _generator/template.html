@@ -156,6 +156,15 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 .send-msg .btn{margin-left:6px}
 .teacher-note{border-left:4px solid var(--brand);background:var(--brand-soft);border-radius:10px;padding:10px 14px;margin-bottom:8px;white-space:pre-wrap}
 .teacher-note b{color:var(--brand);display:block;margin-bottom:2px}
+.fb{border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:10px;padding:10px 14px;margin:0 0 10px;background:var(--card)}
+.fb.great{border-left-color:var(--ok)}.fb.needs_work{border-left-color:var(--no)}
+.fb-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:4px}
+.fb-head b{color:var(--ink)}
+.fb-tag{font-size:.75rem;font-weight:700;border-radius:999px;padding:1px 9px;background:var(--brand-soft);color:var(--brand)}
+.fb.great .fb-tag{background:var(--ok-soft);color:var(--ok)}.fb.needs_work .fb-tag{background:var(--no-soft);color:var(--no)}
+.fb ul{margin:6px 0 0;padding-left:20px}.fb li{margin-bottom:3px}
+.fb .wrong{color:var(--no);text-decoration:line-through}.fb .right{color:var(--ok);font-weight:600}
+.fb-small{font-size:.8rem;color:var(--muted);margin-top:6px}
 </style>
 </head>
 <body>
@@ -188,7 +197,7 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 var D = JSON.parse(document.getElementById('data').textContent);
 var STORE = '__STORE__';
 var state = load();
-function blank(){ return {draft:{}, sub:{}, choice:{}, seen:{}, sent:{}, dirty:{}}; }
+function blank(){ return {draft:{}, sub:{}, choice:{}, seen:{}, sent:{}, dirty:{}, fb:{}}; }
 function load(){ try { var s = JSON.parse(localStorage.getItem(STORE)); return s && s.sub ? s : blank(); } catch(e){ return blank(); } }
 function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){} }
 
@@ -310,11 +319,82 @@ function renderTheory(u){
 var LINES = [['short', 'Short answer'], ['expand', 'Extend'], ['rote', 'Memorised answer'], ['trait', 'Personal detail'], ['use', 'Use'], ['hint', 'Hint']];
 function answerHtml(it, id){
   var s = '';
-  if (state.sub[id]) s += '<div class="note">Your answer:</div><div class="mine" lang="en">' + esc(state.sub[id]) + '</div>';
+  if (state.sub[id]) s += '<div class="note">Your answer:</div><div class="mine" lang="en">' + esc(state.sub[id]) + '</div>' + feedbackHtml(it, id);
   s += '<div class="main">' + (it.suggest ? '<span class="label">Suggestion:</span> ' : it.model ? '<span class="label">Model answer:</span> ' : '<span class="label">Answer:</span> ') + it.answer + speakBtn(textOf(it.answer)) + '</div>';
   if (it.alt) s += '<div class="alt"><span class="label">Also accepted:</span> ' + it.alt + speakBtn(textOf(it.alt)) + '</div>';
   if (it.note) s += '<div class="note" style="margin-top:6px">' + it.note + '</div>';
   return s;
+}
+/* ---------- feedback on Submit: Gemini through the portal, or free quick checks ---------- */
+var checking = {};
+function feedbackHtml(it, id){
+  var f = (state.fb || {})[id];
+  if (checking[id]) return '<div class="fb"><div class="fb-head"><b>Feedback</b><span class="fb-small">Checking your answer…</span></div></div>';
+  if (!f || f.for !== state.sub[id]) return '';
+  if (f.kind === 'ai') {
+    var r = f.data, tag = {great: 'Great', good: 'Good', needs_work: 'Needs work'}[r.verdict] || 'Good';
+    var s = '<div class="fb ' + esc(r.verdict) + '" lang="en"><div class="fb-head"><b>Feedback</b><span class="fb-tag">' + tag + '</span></div><div>' + esc(r.feedback) + '</div>';
+    if (r.corrections.length) s += '<ul>' + r.corrections.map(function(c){
+      return '<li><span class="wrong">' + esc(c.wrong) + '</span> → <span class="right">' + esc(c.right) + '</span>' + (c.why ? ' <span class="fb-small">(' + esc(c.why) + ')</span>' : '') + '</li>';
+    }).join('') + '</ul>';
+    if (r.improved) s += '<div style="margin-top:6px"><span class="label">Better:</span> ' + esc(r.improved) + '</div>';
+    return s + '<div class="fb-small">AI feedback; it can be wrong. Your teacher&rsquo;s comment is the final word.</div></div>';
+  }
+  var c = f.data;
+  return '<div class="fb" lang="en"><div class="fb-head"><b>Quick checks</b></div><ul>' + c.list.map(function(x){
+    return '<li>' + (x.ok ? '✓ ' : '✗ ') + esc(x.text) + '</li>';
+  }).join('') + '</ul>' + (c.why ? '<div class="fb-small">' + esc(c.why) + '</div>' : '') + '</div>';
+}
+function words(t){ return (t.match(/[A-Za-z']+/g) || []); }
+function sentences(t){ return t.split(/[.!?]+(?:\s|$)/).filter(function(x){ return x.trim(); }).length; }
+function quickChecks(it, id){
+  var a = state.sub[id], low = ' ' + a.toLowerCase().replace(/[^a-z' ]+/g, ' ').replace(/\s+/g, ' ') + ' ', list = [];
+  // Lenient: each word of the phrase may change its ending (make → making, affect → affects).
+  var has = function(p){
+    var ws = p.toLowerCase().replace(/[^a-z' ]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+    if (!ws.length) return true;
+    var re = new RegExp(' ' + ws.map(function(w){ return (w.length > 3 ? w.slice(0, Math.max(3, w.length - 2)) : w) + "[a-z']*"; }).join(" (?:[a-z']+ )?"));
+    return re.test(low);
+  };
+  if (it.use) textOf(it.use).split(/\s*\/\s*/).forEach(function(p){ if (p.trim()) list.push({ok: has(p), text: 'Uses “' + p.trim() + '”'}); });
+  if (it.cue && it.kind === 'write' && !it.use) {
+    var key = words(textOf(it.cue).replace(/Use "[^"]*"/g, '')).filter(function(w){ return w.length > 3; });
+    var quoted = (textOf(it.cue).match(/"([^"]+)"/g) || []).map(function(q){ return q.replace(/"/g, ''); });
+    quoted.forEach(function(p){ list.push({ok: has(p), text: 'Uses “' + p + '”'}); });
+    if (!quoted.length && key.length) {
+      var hit = key.filter(function(w){ return low.indexOf(w.toLowerCase().slice(0, 4)) >= 0; }).length;
+      list.push({ok: hit / key.length >= 0.7, text: 'Uses the cue words (' + hit + '/' + key.length + ')'});
+    }
+  }
+  if (it.expand) {
+    var parts = textOf(it.expand).split('|').length;
+    list.push({ok: sentences(a) >= Math.min(parts + 1, 3), text: 'Extends the short answer with more sentences'});
+  }
+  var n = words(a).length, q = (it.q || '').toLowerCase();
+  if (it.suggest && it.q) list.push({ok: n >= 15 && n <= 50, text: 'Length: ' + n + ' words (aim for about 20–40)'});
+  var past = /\b(was|were|did|had|went|got|saw|took|made|used to|\w+ed)\b/i.test(a);
+  if (/^(did|was|were|when was|what was|how did)\b|as a (child|kid)|when you were/.test(q)) list.push({ok: past, text: 'Past tense for a past question'});
+  else if (/^have you ever|^how long have/.test(q)) list.push({ok: /\b(i have|i've|i haven't|have been|'ve)\b/i.test(a), text: 'Present perfect (I have / I\'ve…)'});
+  else if (/^will you|in the future/.test(q)) list.push({ok: /\b(will|'ll|going to|planning|hoping|hope|would like|'d like)\b/i.test(a), text: 'Talks about the future'});
+  else if (/\bwould\b/.test(q)) list.push({ok: /\b(would|'d)\b/i.test(a), text: 'Uses would'});
+  list.push({ok: /^[A-Z]/.test(a.trim()) && /[.!?]$/.test(a.trim()), text: 'Starts with a capital letter and ends with a full stop'});
+  return list;
+}
+function assess(it, id){
+  var a = state.sub[id];
+  var done = function(kind, data){ state.fb = state.fb || {}; state.fb[id] = {for: a, kind: kind, data: data}; save(); delete checking[id]; if (document.querySelector('.item[data-id="' + id + '"]')) rerenderItem(id); };
+  var fallback = function(why){ done('checks', {list: quickChecks(it, id), why: why}); };
+  if (!API_URL || !token()) return fallback('Sign in to the portal to get AI feedback.');
+  var p = id.split('-'), u = D.units.find(function(x){ return x.num === +p[0]; }), ex = u.exercises[+p[1] - 1];
+  checking[id] = 1; rerenderItem(id);
+  apiCall('workbook.assess', {url: location.href.split('#')[0], instruction: textOf(ex.intro), prompt: promptOf(it),
+    reference: textOf(it.answer), answer: a})
+    .then(function(res){
+      if (res.ok) return done('ai', res.result);
+      fallback({not_configured: 'AI feedback is not switched on yet.', limit: 'Daily AI feedback limit reached; try again tomorrow.',
+        busy: 'AI feedback is busy right now; submit again in a minute.', error: 'AI feedback is not available right now.'}[res.reason] || '');
+    })
+    .catch(function(e){ fallback(e.code === 'unauthorized' ? 'Sign in to the portal to get AI feedback.' : e.code === 'forbidden' ? 'AI feedback is only for students of this class.' : 'AI feedback is not available right now.'); });
 }
 function choiceResult(it, id){
   var pick = state.choice[id];
@@ -513,6 +593,8 @@ $('#main').addEventListener('click', function(e){
     var changed = state.sub[id] !== t;
     state.sub[id] = t; delete state.draft[id]; save(); rerenderItem(id);
     var a = document.getElementById('a-' + id); if (a) a.scrollIntoView({block: 'nearest'});
+    var f = (state.fb || {})[id];
+    if (!f || f.for !== t || f.kind !== 'ai') assess(findItem(id), id);
     if (changed) afterAnswer(id);
     return;
   }
