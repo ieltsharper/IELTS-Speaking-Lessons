@@ -188,6 +188,21 @@ def main(src, dst, store, env_path=None):
             .replace('__DATA__', js(data)))
     pathlib.Path(dst).write_text(page, encoding='utf-8', newline='\n')
     print('wrote', dst, len(page), 'bytes;', len(audio), 'clips')
+    write_catalog(pathlib.Path(dst), data)
+
+
+def write_catalog(dst, data):
+    """exercises.json next to the page: the portal's "Quyền nộp bài" screen lists these exercises
+    so the teacher can choose who sends which ones. Other lessons already in it are kept."""
+    path = dst.parent / 'exercises.json'
+    cat = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {
+        'title': 'IELTS Speaking Lessons', 'pages': []}
+    entry = {'href': dst.name, 'title': data['cover'][0], 'exercises': [
+        {'key': f"{u['num']}-{k}", 'title': f"Unit {u['num']} · {ex['title']}", 'items': len(ex['items'])}
+        for u in data['units'] for k, ex in enumerate(u['exercises'], 1)
+        if any(it['kind'] != 'read' for it in ex['items'])]}
+    cat['pages'] = [x for x in cat['pages'] if x['href'] != dst.name] + [entry]
+    path.write_text(json.dumps(cat, ensure_ascii=False, indent=1) + '\n', encoding='utf-8', newline='\n')
 
 
 if __name__ == '__main__':
