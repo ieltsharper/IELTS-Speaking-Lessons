@@ -1,0 +1,15 @@
+{
+ "_about": "Teacher's changes on top of the .docx (2026-11-01). dropGuide: guide blocks to remove (by exact html). replace: exact text swaps anywhere in the lesson.",
+ "dropGuide": [
+  "Workbook này dùng <b>kèm handout Lesson 1</b> (<i>Approach to IELTS Speaking Part 1</i>). Handout dạy lý thuyết và có bài tập ngắn trên lớp; workbook cho bạn <b>luyện thêm</b> với cùng ba kỹ thuật, cùng từ vựng và cùng danh sách câu hỏi.",
+  "<b>Unit 1</b> Phát âm: âm cuối và trọng âm · <b>Unit 2</b> Ba kỹ thuật: 5W1H, Personalisation, Tense control · <b>Unit 3</b> Work or studies · <b>Unit 4</b> Home and accommodation (gồm <i>The area you live in</i>) · <b>Unit 5</b> Hometown · <b>Phụ lục</b> câu hỏi theo số thứ tự trong handout · <b>Đáp án</b>."
+ ],
+ "replace": [
+  ["<b>Một câu trả lời Part 1 tốt (handout, KEY IDEA)</b>", "<b>Một câu trả lời Part 1 tốt</b>"],
+  ["<b>Trả lời trực tiếp + 1-2 chi tiết cụ thể (5W1H) + một điều thật về bạn (Personalisation), đúng thì (Tense control).</b> Khoảng 2-4 câu, 30 giây. Ngắn mà tự nhiên tốt hơn dài mà học thuộc.",
+   "Trả lời trực tiếp, rồi áp dụng <b>ít nhất 1 trong 3 kỹ thuật</b>: thêm 1-2 chi tiết cụ thể (5W1H), nói một điều thật về bạn (Personalisation), hoặc dùng đúng thì (Tense control). Không cần đủ cả 3. Khoảng 2-4 câu, 30 giây.</p><p class=\"formula\"><b>Ngắn mà tự nhiên tốt hơn dài mà học thuộc.</b>"],
+  ["Công thức (giống handout): <b>trả lời trực tiếp + 1-2 chi tiết cụ thể (5W1H) + một điều thật về bạn (Personalisation), đúng thì (Tense control)</b>. Chỉ cần 2-4 câu.",
+   "Công thức: <b>trả lời trực tiếp + ít nhất 1 trong 3 kỹ thuật</b>: 1-2 chi tiết cụ thể (5W1H), một điều thật về bạn (Personalisation) hoặc đúng thì (Tense control). Chỉ cần 2-4 câu."],
+  ["Ba kỹ thuật (tóm tắt handout)", "Ba kỹ thuật"]
+ ]
+}

@@ -68,6 +68,20 @@ def clip_id(text, voice):
 
 def main(src, dst, store):
     data = json.loads(pathlib.Path(src).read_text(encoding='utf-8'))
+    edits_path = pathlib.Path(src).with_suffix('.edits.json')
+    if edits_path.exists():  # the teacher's changes on top of the .docx
+        edits = json.loads(edits_path.read_text(encoding='utf-8'))
+        drop = edits.get('dropGuide', [])
+        if not all(any(b['html'] == h for b in data['guide']) for h in drop):
+            raise SystemExit('dropGuide: a block was not found')
+        data['guide'] = [b for b in data['guide'] if b['html'] not in drop]
+        raw = json.dumps(data, ensure_ascii=False)
+        for old, new in edits.get('replace', []):
+            o, n = json.dumps(old, ensure_ascii=False)[1:-1], json.dumps(new, ensure_ascii=False)[1:-1]
+            if o not in raw:
+                raise SystemExit(f'replace: not found: {old[:60]}')
+            raw = raw.replace(o, n)
+        data = json.loads(raw)
     for k in ('bank', 'bankIntro', 'bankTitle'):  # the question bank is not shown (teacher's choice)
         data.pop(k, None)
     audio, needed = {}, {}
