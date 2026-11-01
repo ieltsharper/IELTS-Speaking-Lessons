@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>__TITLE__ · IELTS Harper Portal</title>
+<style>
+/* IELTS Harper Portal look (same tokens as the Speaking band descriptors page). */
+:root{
+  --page:#f7f5f2; --card:#ffffff; --line:#e7e5e4; --line-strong:#d6d3d1;
+  --ink:#1c1917; --muted:#57534e; --heading:#f96c1b;
+  --brand:#c2410c; --brand-hover:#9a3412; --on-brand:#ffffff; --brand-soft:#fff7ed;
+  --hl:#ffedd5;
+  --ok:#065f46; --ok-soft:#ecfdf5; --no:#991b1b; --no-soft:#fef2f2;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --page:#171311; --card:#221c19; --line:#3a302b; --line-strong:#4f433c;
+    --ink:#f5f0eb; --muted:#b8aca3; --brand-soft:#3a2416; --hl:#5a3418;
+    --ok:#6ee7b7; --ok-soft:#12302a; --no:#fca5a5; --no-soft:#3b1d1d;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+a{color:var(--brand)}
+button,textarea,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* top bar, as in the portal */
+.topbar{background:var(--card);border-bottom:1px solid var(--line)}
+.topbar .wrap{padding-top:12px;padding-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:inline-flex;align-items:center;gap:10px;color:var(--heading);font-weight:700;font-size:1.15rem;text-decoration:none;margin-right:auto}
+.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:.85rem;font-weight:800}
+.topbar-link{color:var(--ink);font-weight:600;font-size:.9rem;text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.topbar-link:hover{background:var(--brand-soft)}
+
+/* masthead */
+header.mast .wrap{padding-top:28px}
+.hero{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px}
+.eyebrow{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brand);background:var(--brand-soft);border-radius:999px;padding:3px 10px;margin:0 0 10px}
+h1{color:var(--heading);font-weight:700;font-size:clamp(1.5rem,3.6vw,2.1rem);line-height:1.2;margin:0 0 8px}
+.standfirst{margin:0;color:var(--muted)}
+.standfirst.small{font-size:.9rem;font-style:italic}
+.progress-all{margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.bar{flex:1;min-width:160px;height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--brand);width:0}
+
+/* section tabs */
+nav.tabs{position:sticky;top:0;z-index:40;background:var(--page);border-bottom:1px solid var(--line);margin-top:20px}
+nav.tabs .wrap{display:flex;gap:6px;overflow-x:auto;padding-top:10px;padding-bottom:10px}
+nav.tabs a{border:1px solid transparent;border-radius:12px;padding:8px 14px;white-space:nowrap;color:var(--muted);font-size:.93rem;font-weight:600;text-decoration:none}
+nav.tabs a:hover{background:var(--brand-soft);color:var(--ink)}
+nav.tabs a[aria-current="page"]{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+main{padding:28px 0 80px}
+h2{color:var(--heading);font-weight:700;font-size:1.45rem;margin:0 0 6px}
+h3{font-weight:700;font-size:1.12rem;margin:30px 0 10px}
+h4{font-weight:700;font-size:1rem;margin:0 0 8px}
+.lede{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px}
+.card p{margin:0 0 8px}.card p:last-child{margin-bottom:0}
+ul.plain{margin:4px 0 12px;padding-left:22px}
+ul.plain li{margin-bottom:6px}
+
+/* unit sub-navigation and level filter */
+.subnav{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin:14px 0 18px}
+.chip{border:1px solid var(--line-strong);background:var(--card);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.88rem;font-weight:600;color:var(--muted)}
+.chip:hover{background:var(--brand-soft);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+.chip small{font-weight:500;opacity:.85}
+.sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.filter-label{font-size:.82rem;color:var(--muted);margin-left:auto}
+.lv{color:var(--brand);letter-spacing:1px;font-size:.8rem;white-space:nowrap}
+
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);margin-bottom:14px}
+table{border-collapse:collapse;width:100%;font-size:.94rem}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+th{background:var(--brand);color:var(--on-brand);font-weight:700;font-size:.85rem}
+td.phrase{font-weight:700;white-space:nowrap}
+td.muted{color:var(--muted)}
+.speak{border:1px solid var(--line-strong);background:var(--card);border-radius:999px;width:28px;height:28px;cursor:pointer;font-size:.8rem;vertical-align:middle;margin-left:6px;padding:0;line-height:1}
+.speak:hover{background:var(--brand-soft)}
+
+/* boxes */
+.boxes{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.box h4{color:var(--brand)}
+.mistake{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.mistake:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.bad{color:var(--no)}.good{color:var(--ok)}
+.bad::before{content:"✗ ";font-weight:700}.good::before{content:"✓ ";font-weight:700}
+.note{color:var(--muted);font-size:.92rem}
+.sample{margin-bottom:10px}
+.sample .q{font-weight:700}
+.formula{background:var(--brand-soft);border-left:4px solid var(--brand);border-radius:8px;padding:10px 14px;margin:0 0 12px}
+
+/* exercise items */
+.item{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:12px}
+.item.done{border-color:var(--ok)}
+.item-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.num{display:inline-grid;place-items:center;min-width:28px;height:28px;border-radius:8px;background:var(--brand-soft);color:var(--brand);font-weight:800;font-size:.85rem}
+.cue{font-weight:700;font-size:1.05rem;flex:1;min-width:200px}
+.examiner{color:var(--muted);font-weight:600;font-size:.85rem;margin-right:4px}
+.lines{margin:8px 0 0 38px;font-size:.95rem}
+.lines div{margin-bottom:3px}
+.label{display:inline-block;min-width:78px;color:var(--muted);font-size:.85rem;font-weight:600}
+.hint{color:var(--muted);font-style:italic}
+.work{margin:12px 0 0 38px}
+textarea{width:100%;min-height:58px;resize:vertical;border:1px solid var(--line-strong);border-radius:10px;padding:8px 10px;background:var(--page)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.btn{border:1px solid var(--line-strong);background:var(--card);border-radius:10px;padding:6px 12px;cursor:pointer;font-size:.88rem;font-weight:600}
+.btn:hover{background:var(--brand-soft)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.btn.primary:hover{background:var(--brand-hover)}
+.btn[aria-pressed="true"]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.btn.rec[aria-pressed="true"]{background:var(--no-soft);border-color:var(--no);color:var(--no)}
+audio{height:32px;max-width:260px}
+.answer{margin-top:10px;border-top:1px dashed var(--line-strong);padding-top:10px}
+.answer .main{font-weight:600}
+.answer .alt{margin-top:6px}
+.empty{color:var(--muted);font-style:italic}
+
+/* question bank */
+.search{width:100%;max-width:420px;border:1px solid var(--line-strong);border-radius:12px;padding:8px 12px;background:var(--card);margin-bottom:14px}
+
+footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px solid var(--line)}
+@media (max-width:600px){.lines,.work{margin-left:0}.filter-label{margin-left:0;width:100%}}
+@media print{
+  .topbar,nav.tabs,.subnav,.actions,.speak,textarea,.progress-all,footer{display:none!important}
+  section[hidden]{display:block!important}
+  .answer[hidden]{display:block!important}
+  body{background:#fff}
+  .item,.card{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="https://ieltsharper.github.io/portal/"><span class="brand-mark" aria-hidden="true">IH</span>IELTS Harper Portal</a>
+    <a class="topbar-link" href="https://ieltsharper.github.io/portal/">&larr; Về portal</a>
+  </div>
+</div>
+<header class="mast">
+  <div class="wrap">
+    <div class="hero">
+      <p class="eyebrow">Speaking · Part 1</p>
+      <h1 id="title"></h1>
+      <p class="standfirst" id="sub1"></p>
+      <p class="standfirst" id="sub2"></p>
+      <p class="standfirst small" id="sub3"></p>
+      <div class="progress-all"><span id="progressText"></span><div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
+        <button class="btn" id="reset" type="button">Xoá tiến độ</button></div>
+    </div>
+  </div>
+</header>
+<nav class="tabs" aria-label="Các phần"><div class="wrap" id="tabs"></div></nav>
+<main><div class="wrap" id="main"></div></main>
+<footer><div class="wrap">Bài làm và đánh dấu “Nói to” chỉ được lưu trên trình duyệt này. Ghi âm không được lưu hay gửi đi đâu.</div></footer>
+
+<script type="application/json" id="data">__DATA__</script>
+<script>
+(function(){
+'use strict';
+var D = JSON.parse(document.getElementById('data').textContent);
+var STORE = '__STORE__';
+var state = load();
+function load(){ try { return JSON.parse(localStorage.getItem(STORE)) || {said:{}, text:{}}; } catch(e){ return {said:{}, text:{}}; } }
+function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){} }
+
+var $ = function(s, r){ return (r||document).querySelector(s); };
+function el(tag, attrs, html){
+  var e = document.createElement(tag);
+  if (attrs) for (var k in attrs) { if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); }
+  if (html != null) e.innerHTML = html;
+  return e;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function dots(n){ return n ? '<span class="lv" title="Cấp độ ' + n + '">' + '●'.repeat(n) + '</span>' : ''; }
+function textOf(html){ var t = document.createElement('div'); t.innerHTML = html; return t.textContent; }
+
+/* ---------- speech (browser voice) ---------- */
+var voice = null;
+function pickVoice(){
+  if (!('speechSynthesis' in window)) return;
+  var vs = speechSynthesis.getVoices();
+  voice = vs.find(function(v){ return v.lang === 'en-GB'; }) || vs.find(function(v){ return /^en/.test(v.lang); }) || null;
+}
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text){
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = voice ? voice.lang : 'en-GB'; if (voice) u.voice = voice; u.rate = 0.95;
+  speechSynthesis.speak(u);
+}
+function speakBtn(text){
+  if (!('speechSynthesis' in window)) return '';
+  return '<button type="button" class="speak" data-say="' + esc(text) + '" aria-label="Nghe: ' + esc(text) + '" title="Nghe">🔊</button>';
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest('[data-say]'); if (b) say(b.getAttribute('data-say'));
+});
+
+/* ---------- recording ---------- */
+var rec = null;
+function toggleRecord(btn, holder){
+  if (rec && rec.btn === btn) { rec.mr.stop(); return; }
+  if (rec) rec.mr.stop();
+  if (!navigator.mediaDevices || !window.MediaRecorder) { alert('Trình duyệt này không hỗ trợ ghi âm.'); return; }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    var mr = new MediaRecorder(stream), chunks = [];
+    mr.ondataavailable = function(ev){ chunks.push(ev.data); };
+    mr.onstop = function(){
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      var a = holder.querySelector('audio'); if (a) { URL.revokeObjectURL(a.src); a.remove(); }
+      a = el('audio', {controls:'', 'aria-label':'Bản ghi của bạn'});
+      a.src = URL.createObjectURL(new Blob(chunks, {type: mr.mimeType || 'audio/webm'}));
+      holder.appendChild(a);
+      btn.setAttribute('aria-pressed', 'false'); btn.textContent = '🎙 Ghi âm lại';
+      rec = null;
+    };
+    mr.start(); rec = {mr: mr, btn: btn};
+    btn.setAttribute('aria-pressed', 'true'); btn.textContent = '■ Dừng ghi';
+  }).catch(function(){ alert('Không mở được micro. Hãy cho phép trình duyệt dùng micro rồi thử lại.'); });
+}
+
+/* ---------- progress ---------- */
+var ALL = [];
+D.units.forEach(function(u){ ['1','2','3'].forEach(function(k){ u.ex[k].items.forEach(function(_, i){ ALL.push(u.num + '-' + k + '-' + i); }); }); });
+function unitDone(u){ var n = 0, t = 0; ['1','2','3'].forEach(function(k){ u.ex[k].items.forEach(function(_, i){ t++; if (state.said[u.num + '-' + k + '-' + i]) n++; }); }); return [n, t]; }
+function updateProgress(){
+  var n = ALL.filter(function(id){ return state.said[id]; }).length;
+  $('#progressText').textContent = 'Đã nói to ' + n + '/' + ALL.length + ' câu';
+  $('#progressBar').style.width = (100 * n / ALL.length) + '%';
+  D.units.forEach(function(u){
+    var t = document.querySelector('[data-unit-count="' + u.num + '"]');
+    if (t) { var c = unitDone(u); t.textContent = c[0] + '/' + c[1]; }
+  });
+}
+$('#reset').addEventListener('click', function(){
+  if (!confirm('Xoá toàn bộ câu đã viết và đánh dấu “Nói to” trên trình duyệt này?')) return;
+  state = {said:{}, text:{}}; save(); render();
+});
+
+/* ---------- header and tabs ---------- */
+$('#title').textContent = D.cover[0];
+$('#sub1').textContent = D.cover[1] || '';
+$('#sub2').textContent = D.cover[2] || '';
+$('#sub3').textContent = D.cover[3] || '';
+var TABS = [{id:'huong-dan', label:'Hướng dẫn'}];
+D.units.forEach(function(u){ TABS.push({id:'unit-' + u.num, label:'Unit ' + u.num + ' · ' + u.name, unit:u}); });
+TABS.push({id:'ngan-hang', label:'Ngân hàng câu hỏi'});
+$('#tabs').innerHTML = TABS.map(function(t){ return '<a href="#' + t.id + '">' + esc(t.label) + '</a>'; }).join('');
+
+function route(){
+  var h = location.hash.replace('#', '').split('/');
+  var tab = TABS.find(function(t){ return t.id === h[0]; }) || TABS[0];
+  return {tab: tab, part: h[1] || 'ly-thuyet'};
+}
+var filter = 0;
+
+/* ---------- pages ---------- */
+function renderGuide(){
+  var s = '<h2>' + esc(D.guideTitle) + '</h2>';
+  var open = false, card = '';
+  D.guide.forEach(function(b){
+    if (b.type === 'h') { if (card) s += '<div class="card">' + card + '</div>'; card = '<h4>' + b.html + '</h4>'; open = false; }
+    else if (b.type === 'li') { if (!open) { card += '<ul class="plain">'; open = true; } card += '<li>' + b.html + '</li>'; }
+    else { if (open) { card += '</ul>'; open = false; } card += '<p>' + b.html + '</p>'; }
+  });
+  if (open) card += '</ul>';
+  if (card) s += '<div class="card">' + card + '</div>';
+  s += '<h3>' + esc(D.unitsTitle) + '</h3><div class="boxes">' + D.units.map(function(u){
+    var c = unitDone(u);
+    return '<a class="card" style="text-decoration:none;color:inherit;display:block" href="#unit-' + u.num + '"><h4 style="color:var(--heading)">Unit ' + u.num + ' · ' + esc(u.name) + '</h4><span class="note">Đã nói to <span data-unit-count="' + u.num + '">' + c[0] + '/' + c[1] + '</span> câu</span></a>';
+  }).join('') + '</div>';
+  return s;
+}
+
+function renderTheory(u){
+  var s = '';
+  s += '<div class="card"><h4>Mục đích</h4>' + u.purpose.map(function(p){ return '<p>' + p + '</p>'; }).join('') + '</div>';
+  s += '<h3>Từ vựng hay cho chủ đề</h3><div class="tablewrap"><table><thead><tr><th scope="col">Cụm từ</th><th scope="col">Nghĩa</th><th scope="col">Ví dụ khi nói</th></tr></thead><tbody>' +
+    u.vocab.filter(function(v){ return !filter || v.level === filter; }).map(function(v){
+      return '<tr><td class="phrase">' + dots(v.level) + ' ' + esc(v.phrase) + '</td><td class="muted">' + esc(v.meaning) + '</td><td>' + v.example + speakBtn(textOf(v.example)) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  s += '<h3>Từ câu ngắn đến câu trả lời đầy đủ</h3><p class="formula">' + u.expandFormula + '</p><div class="tablewrap"><table><thead><tr><th scope="col">Câu hỏi + câu trả lời ngắn</th><th scope="col">Kỹ thuật</th><th scope="col">Câu trả lời mở rộng</th></tr></thead><tbody>' +
+    u.expand.map(function(x){
+      return '<tr><td><b>' + esc(x.q) + '</b><br><span class="muted">→ ' + esc(x.short) + '</span></td><td class="muted">' + esc(x.tech) + '</td><td>' + x.answer + speakBtn(textOf(x.answer)) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+  s += '<h3>Câu mẫu</h3><div class="card">' + u.samples.map(function(x){
+    return '<div class="sample"><div class="q">' + esc(x.q) + '</div><div>→ ' + esc(x.a) + speakBtn(x.a) + '</div></div>';
+  }).join('') + '</div>';
+  s += '<div class="boxes">';
+  s += '<div class="card box"><h4>Lỗi cần tránh</h4>' + u.mistakes.map(function(m){
+    return '<div class="mistake"><div class="bad">' + m.bad + '</div><div class="good">' + m.good + '</div><div class="note">' + m.note + '</div></div>';
+  }).join('') + '</div>';
+  s += '<div class="card box"><h4>Chọn cho đúng</h4>' + u.choose.map(function(c){
+    return '<div class="mistake"><div><b>' + esc(c.h) + '</b></div><div class="note">' + c.html + '</div></div>';
+  }).join('') + '</div>';
+  s += '<div class="card box"><h4>Âm cần luyện</h4>' + u.sounds.lines.map(function(l){ return '<p>' + l + '</p>'; }).join('') + '<p class="note">' + u.sounds.tip + '</p></div>';
+  s += '</div>';
+  return s;
+}
+
+function renderExercise(u, k){
+  var ex = u.ex[k];
+  var s = '<h3>' + esc(ex.title) + '</h3><p class="lede">' + ex.intro + '</p>';
+  var shown = 0;
+  ex.items.forEach(function(it, i){
+    if (filter && it.level !== filter) return;
+    shown++;
+    var id = u.num + '-' + k + '-' + i;
+    var said = !!state.said[id];
+    var head = k === '1' ? '<span class="cue">' + it.cue + '</span>'
+                         : '<span class="cue"><span class="examiner">Examiner:</span>' + esc(it.q) + speakBtn(it.q) + '</span>';
+    var lines = '';
+    if (it.short) lines += '<div><span class="label">Câu ngắn:</span> ' + it.short + '</div>';
+    if (it.expand) lines += '<div><span class="label">Mở rộng:</span> ' + it.expand + '</div>';
+    if (it.use) lines += '<div><span class="label">Dùng:</span> ' + it.use + '</div>';
+    if (it.hint) lines += '<div><span class="label">Gợi ý:</span> <span class="hint">' + it.hint + '</span></div>';
+    var ans = '<div class="main">' + (k === '3' ? '<span class="label">Câu mẫu:</span> ' : '') + it.answer + speakBtn(textOf(it.answer)) + '</div>';
+    if (it.alt) ans += '<div class="alt"><span class="label">Cũng chấp nhận:</span> ' + it.alt + speakBtn(textOf(it.alt)) + '</div>';
+    if (it.note) ans += '<div class="note" style="margin-top:6px">' + it.note + '</div>';
+    s += '<div class="item' + (said ? ' done' : '') + '" data-id="' + id + '">' +
+      '<div class="item-head"><span class="num">' + (i + 1) + '</span>' + dots(it.level) + head + '</div>' +
+      '<div class="lines">' + lines + '</div>' +
+      '<div class="work"><label class="note" for="t-' + id + '">Viết lại câu bạn đã nói</label>' +
+      '<textarea id="t-' + id + '" data-text="' + id + '" rows="2" spellcheck="true" lang="en">' + esc(state.text[id] || '') + '</textarea>' +
+      '<div class="actions">' +
+        '<button type="button" class="btn" data-said="' + id + '" aria-pressed="' + said + '">' + (said ? '✓ Đã nói to' : 'Nói to ☐') + '</button>' +
+        '<button type="button" class="btn rec" data-rec aria-pressed="false">🎙 Ghi âm</button>' +
+        '<span class="rec-holder"></span>' +
+        '<button type="button" class="btn primary" data-reveal="a-' + id + '" aria-expanded="false" aria-controls="a-' + id + '">Xem đáp án</button>' +
+      '</div>' +
+      '<div class="answer" id="a-' + id + '" hidden>' + ans + '</div></div></div>';
+  });
+  if (!shown) s += '<p class="empty">Không có câu nào ở cấp độ này.</p>';
+  return s;
+}
+
+function renderUnit(u, part){
+  var parts = [['ly-thuyet', 'A. Lý thuyết'], ['bai-tap-1', 'Bài tập 1'], ['bai-tap-2', 'Bài tập 2'], ['bai-tap-3', 'Bài tập 3']];
+  var s = '<h2>Unit ' + u.num + ' · ' + esc(u.name) + '</h2>';
+  s += '<div class="subnav" role="group" aria-label="Phần của Unit">' + parts.map(function(p){
+    return '<a class="chip" style="text-decoration:none" href="#unit-' + u.num + '/' + p[0] + '" aria-pressed="' + (p[0] === part) + '">' + p[1] + '</a>';
+  }).join('') + '<span class="filter-label">Cấp độ:</span>' +
+    [[0, 'Tất cả'], [1, '● 5.0-6.0'], [2, '●● 6.0-6.5'], [3, '●●● 7.0-7.5']].map(function(f){
+      return '<button type="button" class="chip" data-filter="' + f[0] + '" aria-pressed="' + (filter === f[0]) + '">' + f[1] + '</button>';
+    }).join('') + '</div>';
+  if (part === 'ly-thuyet') s += renderTheory(u);
+  else s += renderExercise(u, part.slice(-1));
+  var i = parts.findIndex(function(p){ return p[0] === part; });
+  if (i < parts.length - 1) s += '<p style="text-align:right"><a class="btn primary" style="text-decoration:none;display:inline-block" href="#unit-' + u.num + '/' + parts[i + 1][0] + '">Tiếp: ' + parts[i + 1][1] + ' →</a></p>';
+  return s;
+}
+
+function renderBank(){
+  var s = '<h2>' + esc(D.bankTitle) + '</h2>' + D.bankIntro.map(function(p){ return '<p class="lede">' + p + '</p>'; }).join('');
+  s += '<input class="search" type="search" id="bankSearch" placeholder="Tìm câu hỏi hoặc từ vựng…" aria-label="Tìm trong ngân hàng câu hỏi">';
+  D.bank.forEach(function(b){
+    s += '<div data-bank><h3>' + esc(b.topic) + '</h3><div class="tablewrap"><table><thead><tr><th scope="col">Câu hỏi</th><th scope="col">Câu mở đầu gợi ý</th><th scope="col">Từ vựng nên dùng</th></tr></thead><tbody>' +
+      b.rows.map(function(r){ return '<tr><td><b>' + r[0] + '</b>' + speakBtn(textOf(r[0])) + '</td><td>' + r[1] + '</td><td class="muted">' + r[2] + '</td></tr>'; }).join('') +
+      '</tbody></table></div></div>';
+  });
+  return s;
+}
+
+function render(){
+  var r = route();
+  document.querySelectorAll('#tabs a').forEach(function(a){
+    if (a.getAttribute('href') === '#' + r.tab.id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  var m = $('#main');
+  if (r.tab.unit) m.innerHTML = renderUnit(r.tab.unit, /^(ly-thuyet|bai-tap-[123])$/.test(r.part) ? r.part : 'ly-thuyet');
+  else if (r.tab.id === 'ngan-hang') m.innerHTML = renderBank();
+  else m.innerHTML = renderGuide();
+  updateProgress();
+}
+
+/* ---------- events ---------- */
+var lastTab = null;
+window.addEventListener('hashchange', function(){
+  if (rec) rec.mr.stop();
+  render();
+  var t = route().tab.id;
+  window.scrollTo(0, t === lastTab ? Math.min(window.scrollY, $('nav.tabs').offsetTop) : 0);
+  lastTab = t;
+});
+$('#main').addEventListener('click', function(e){
+  var b;
+  if ((b = e.target.closest('[data-filter]'))) { filter = +b.getAttribute('data-filter'); var y = window.scrollY; render(); window.scrollTo(0, y); return; }
+  if ((b = e.target.closest('[data-said]'))) {
+    var id = b.getAttribute('data-said'), on = !state.said[id];
+    if (on) state.said[id] = 1; else delete state.said[id];
+    save();
+    b.setAttribute('aria-pressed', on); b.textContent = on ? '✓ Đã nói to' : 'Nói to ☐';
+    b.closest('.item').classList.toggle('done', on);
+    updateProgress(); return;
+  }
+  if ((b = e.target.closest('[data-reveal]'))) {
+    var a = document.getElementById(b.getAttribute('data-reveal')), open = a.hidden;
+    a.hidden = !open; b.setAttribute('aria-expanded', open); b.textContent = open ? 'Ẩn đáp án' : 'Xem đáp án'; return;
+  }
+  if ((b = e.target.closest('[data-rec]'))) { toggleRecord(b, b.parentNode.querySelector('.rec-holder')); }
+});
+$('#main').addEventListener('input', function(e){
+  var t = e.target;
+  if (t.matches('[data-text]')) { var id = t.getAttribute('data-text'); if (t.value) state.text[id] = t.value; else delete state.text[id]; save(); }
+  if (t.id === 'bankSearch') {
+    var q = t.value.trim().toLowerCase();
+    document.querySelectorAll('[data-bank]').forEach(function(sec){
+      var any = false;
+      sec.querySelectorAll('tbody tr').forEach(function(tr){ var hit = !q || tr.textContent.toLowerCase().indexOf(q) >= 0; tr.hidden = !hit; any = any || hit; });
+      sec.hidden = !any;
+    });
+  }
+});
+lastTab = route().tab.id;
+render();
+})();
+</script>
+</body>
+</html>
