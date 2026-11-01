@@ -112,6 +112,18 @@ def apply_english(data, en):
         raise SystemExit('No English for: ' + ' | '.join(missing))
 
 
+def keep_items(data, keep):
+    """Shows only the chosen items of an exercise ('unit-exercise': [original numbers])."""
+    for u in data['units']:
+        for k, ex in enumerate(u['exercises'], 1):
+            chosen = keep.get(f"{u['num']}-{k}")
+            if chosen is None:
+                continue
+            if any(n >= len(ex['items']) for n in chosen):
+                raise SystemExit(f"keep {u['num']}-{k}: no item {max(chosen)}")
+            ex['items'] = [it for it in ex['items'] if it['n'] in chosen]
+
+
 def suggest_only(data):
     """Units 2 and later, exercises 2 and 3: one Suggestion, no alternative (teacher's choice)."""
     for u in data['units']:
@@ -126,6 +138,12 @@ def suggest_only(data):
 
 def main(src, dst, store, env_path=None):
     data = json.loads(pathlib.Path(src).read_text(encoding='utf-8'))
+    # Each item keeps its original number: it is part of the id under which the page saves the
+    # student's answers, so removing items later never mixes answers up.
+    for u in data['units']:
+        for ex in u['exercises']:
+            for n, it in enumerate(ex['items']):
+                it['n'] = n
     edits_path = pathlib.Path(src).with_suffix('.edits.json')
     if edits_path.exists():  # the teacher's changes on top of the .docx
         edits = json.loads(edits_path.read_text(encoding='utf-8'))
@@ -143,6 +161,7 @@ def main(src, dst, store, env_path=None):
         apply_english(data, edits.get('en', {}))
         if edits.get('suggestOnly'):
             suggest_only(data)
+        keep_items(data, edits.get('keep', {}))
     for k in ('bank', 'bankIntro', 'bankTitle'):  # the question bank is not shown (teacher's choice)
         data.pop(k, None)
     audio, needed = {}, {}

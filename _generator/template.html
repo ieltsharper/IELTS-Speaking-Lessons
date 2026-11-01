@@ -227,7 +227,7 @@ document.addEventListener('click', function(e){
 });
 
 /* ---------- progress ---------- */
-function ids(u){ var out = []; u.exercises.forEach(function(ex, k){ ex.items.forEach(function(_, i){ out.push(u.num + '-' + (k + 1) + '-' + i); }); }); return out; }
+function ids(u){ var out = []; u.exercises.forEach(function(ex, k){ ex.items.forEach(function(it){ out.push(u.num + '-' + (k + 1) + '-' + it.n); }); }); return out; }
 function isDone(id){ return !!(state.sub[id] || state.choice[id] || state.seen[id]); }
 var ALL = [].concat.apply([], D.units.map(ids));
 function updateProgress(){
@@ -434,7 +434,7 @@ function renderItem(it, id, i){
 }
 function findItem(id){
   var p = id.split('-'), u = D.units.find(function(x){ return x.num === +p[0]; });
-  return u.exercises[+p[1] - 1].items[+p[2]];
+  return u.exercises[+p[1] - 1].items.find(function(it){ return it.n === +p[2]; });
 }
 function renderExercise(u, k){
   var ex = u.exercises[k - 1];
@@ -443,7 +443,7 @@ function renderExercise(u, k){
   ex.items.forEach(function(it, i){
     if (filter && it.level !== filter) return;
     shown++;
-    s += renderItem(it, u.num + '-' + k + '-' + i, i);
+    s += renderItem(it, u.num + '-' + k + '-' + it.n, i);
   });
   if (!shown) s += '<p class="empty">No items at this level.</p>';
   s += '<div class="send-box" data-ex="' + u.num + '-' + k + '">' + sendBox(u.num + '-' + k) + '</div>';
@@ -465,8 +465,8 @@ function apiCall(action, payload){
 }
 function exParts(key){ var p = key.split('-'), u = D.units.find(function(x){ return x.num === +p[0]; }); return {u: u, k: +p[1], ex: u.exercises[+p[1] - 1]}; }
 function sendable(ex){ return ex.items.some(function(it){ return it.kind !== 'read'; }); }
-function finished(key){ var x = exParts(key); return x.ex.items.every(function(_, i){ var id = key + '-' + i; return state.sub[id] || state.choice[id]; }); }
-function doneCount(key){ var x = exParts(key); return x.ex.items.filter(function(_, i){ var id = key + '-' + i; return state.sub[id] || state.choice[id]; }).length; }
+function finished(key){ var x = exParts(key); return x.ex.items.every(function(it){ var id = key + '-' + it.n; return state.sub[id] || state.choice[id]; }); }
+function doneCount(key){ var x = exParts(key); return x.ex.items.filter(function(it){ var id = key + '-' + it.n; return state.sub[id] || state.choice[id]; }).length; }
 function promptOf(it){
   var head = it.q != null ? (it.qnum ? it.qnum + ': ' : '') + it.q : textOf(it.cue);
   var lines = LINES.filter(function(l){ return it[l[0]]; }).map(function(l){ return l[1] + ': ' + textOf(it[l[0]]); });
@@ -477,8 +477,8 @@ function payloadFor(key){
   return {
     url: location.href.split('#')[0], lessonTitle: D.cover[0], exercise: key,
     exerciseTitle: 'Unit ' + x.u.num + ' · ' + x.ex.title,
-    answers: x.ex.items.map(function(it, i){
-      var id = key + '-' + i;
+    answers: x.ex.items.map(function(it){
+      var id = key + '-' + it.n;
       if (it.kind === 'choice') {
         var opt = function(l){ var o = it.options.find(function(o){ return o.letter === l; }); return l + '. ' + (o ? o.text : ''); };
         return {prompt: promptOf(it), answer: opt(state.choice[id]), model: opt(it.correct), correct: state.choice[id] === it.correct};
@@ -542,7 +542,7 @@ function renderUnit(u, part){
   if (!parts.some(function(p){ return p[0] === part; })) part = 'ly-thuyet';
   var s = '<h2>Unit ' + u.num + ' · ' + esc(u.name) + '</h2>';
   s += '<div class="subnav" role="group" aria-label="Unit sections">' + parts.map(function(p){
-    var n = p[0] === 'ly-thuyet' ? '' : (function(){ var k = +p[0].slice(-1), all = u.exercises[k - 1].items.map(function(_, i){ return u.num + '-' + k + '-' + i; }); return ' <small>' + all.filter(isDone).length + '/' + all.length + '</small>'; })();
+    var n = p[0] === 'ly-thuyet' ? '' : (function(){ var k = +p[0].slice(-1), all = u.exercises[k - 1].items.map(function(it){ return u.num + '-' + k + '-' + it.n; }); return ' <small>' + all.filter(isDone).length + '/' + all.length + '</small>'; })();
     return '<a class="chip" style="text-decoration:none" href="#unit-' + u.num + '/' + p[0] + '" aria-pressed="' + (p[0] === part) + '">' + p[1] + n + '</a>';
   }).join('') + '<span class="filter-label">Level:</span>' +
     [[0, 'All'], [1, '● 5.0-6.0'], [2, '●● 6.0-6.5'], [3, '●●● 7.0-7.5']].map(function(f){
@@ -567,12 +567,13 @@ function render(){
 function rerenderItem(id){
   var old = document.querySelector('.item[data-id="' + id + '"]'), p = id.split('-');
   var tmp = document.createElement('div');
-  tmp.innerHTML = renderItem(findItem(id), id, +p[2]);
+  var item = findItem(id);
+  tmp.innerHTML = renderItem(item, id, D.units.find(function(x){ return x.num === +p[0]; }).exercises[+p[1] - 1].items.indexOf(item));
   old.replaceWith(tmp.firstChild);
   updateProgress();
   var chip = document.querySelector('.subnav a[aria-pressed="true"] small');
   if (chip) { var ex = D.units.find(function(x){ return x.num === +p[0]; }).exercises[+p[1] - 1];
-    chip.textContent = ex.items.filter(function(_, i){ return isDone(p[0] + '-' + p[1] + '-' + i); }).length + '/' + ex.items.length; }
+    chip.textContent = ex.items.filter(function(it){ return isDone(p[0] + '-' + p[1] + '-' + it.n); }).length + '/' + ex.items.length; }
 }
 
 /* ---------- events ---------- */
