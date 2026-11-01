@@ -87,6 +87,7 @@ td.phrase{font-weight:700;white-space:nowrap}
 td.muted{color:var(--muted)}
 .speak{border:1px solid var(--line-strong);background:var(--card);border-radius:999px;width:28px;height:28px;cursor:pointer;font-size:.8rem;vertical-align:middle;margin-left:6px;padding:0;line-height:1}
 .speak:hover{background:var(--brand-soft)}
+.speak.on{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
 
 /* boxes */
 .boxes{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
@@ -174,6 +175,7 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 <footer><div class="wrap">Câu bạn nộp được lưu trên trình duyệt này để bạn so với đáp án; không gửi đi đâu.</div></footer>
 
 <script type="application/json" id="data">__DATA__</script>
+<script type="application/json" id="audio">__AUDIO__</script>
 <script>
 (function(){
 'use strict';
@@ -189,25 +191,24 @@ function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&
 function dots(n){ return n ? '<span class="lv" title="Cấp độ ' + n + '">' + '●'.repeat(n) + '</span>' : ''; }
 function textOf(html){ var t = document.createElement('div'); t.innerHTML = html; return t.textContent; }
 
-/* ---------- browser voice for the English examples ---------- */
-var voice = null;
-function pickVoice(){
-  var vs = speechSynthesis.getVoices();
-  voice = vs.find(function(v){ return v.lang === 'en-GB'; }) || vs.find(function(v){ return /^en/.test(v.lang); }) || null;
-}
-if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function say(text){
-  speechSynthesis.cancel();
-  var u = new SpeechSynthesisUtterance(text);
-  u.lang = voice ? voice.lang : 'en-GB'; if (voice) u.voice = voice; u.rate = 0.95;
-  speechSynthesis.speak(u);
-}
+/* ---------- recorded audio for the English examples (audio/<id>.mp3, made by make_audio.py) ---------- */
+var AUDIO = JSON.parse(document.getElementById('audio').textContent);
+var player = new Audio(), playing = null;
 function speakBtn(text){
-  if (!('speechSynthesis' in window) || !text) return '';
-  return '<button type="button" class="speak" data-say="' + esc(text) + '" aria-label="Nghe: ' + esc(text) + '" title="Nghe">🔊</button>';
+  var id = AUDIO[text];
+  if (!id) return '';
+  return '<button type="button" class="speak" data-audio="' + id + '" aria-label="Nghe: ' + esc(text) + '" title="Nghe">🔊</button>';
 }
+function stopAudio(){ player.pause(); if (playing) playing.classList.remove('on'); playing = null; }
+player.addEventListener('ended', stopAudio);
 document.addEventListener('click', function(e){
-  var b = e.target.closest('[data-say]'); if (b) say(b.getAttribute('data-say'));
+  var b = e.target.closest('[data-audio]'); if (!b) return;
+  var again = playing === b;
+  stopAudio();
+  if (again) return;
+  player.src = '__AUDIO_DIR__' + b.getAttribute('data-audio') + '.mp3';
+  playing = b; b.classList.add('on');
+  player.play().catch(stopAudio);
 });
 
 /* ---------- progress ---------- */
@@ -231,7 +232,6 @@ $('#cover').innerHTML = D.cover.slice(1).map(function(c, i, a){
 }).join('');
 var TABS = [{id:'huong-dan', label:'Hướng dẫn'}];
 D.units.forEach(function(u){ TABS.push({id:'unit-' + u.num, label:'Unit ' + u.num + ' · ' + u.name, unit:u}); });
-TABS.push({id:'ngan-hang', label:'Ngân hàng câu hỏi'});
 $('#tabs').innerHTML = TABS.map(function(t){ return '<a href="#' + t.id + '">' + esc(t.label) + '</a>'; }).join('');
 
 function route(){
@@ -379,17 +379,6 @@ function renderUnit(u, part){
   return s;
 }
 
-function renderBank(){
-  var s = '<h2>' + esc(D.bankTitle) + '</h2>' + D.bankIntro.map(function(p){ return '<p class="lede">' + p + '</p>'; }).join('');
-  s += '<input class="search" type="search" id="bankSearch" placeholder="Tìm câu hỏi hoặc từ vựng…" aria-label="Tìm trong ngân hàng câu hỏi">';
-  D.bank.forEach(function(b){
-    s += '<div data-bank><h3>' + esc(b.topic) + '</h3><div class="tablewrap"><table><thead><tr>' + b.head.map(function(h){ return '<th scope="col">' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      b.rows.map(function(r){ return '<tr><td><b>' + r[0] + '</b>' + speakBtn(textOf(r[0]).replace(/^\d+\.\s*/, '')) + '</td><td>' + r[1] + '</td><td class="muted">' + r[2] + '</td></tr>'; }).join('') +
-      '</tbody></table></div></div>';
-  });
-  return s;
-}
-
 function render(){
   var r = route();
   document.querySelectorAll('#tabs a').forEach(function(a){
@@ -397,7 +386,6 @@ function render(){
   });
   var m = $('#main');
   if (r.tab.unit) m.innerHTML = renderUnit(r.tab.unit, r.part);
-  else if (r.tab.id === 'ngan-hang') m.innerHTML = renderBank();
   else m.innerHTML = renderGuide();
   updateProgress();
 }
@@ -456,14 +444,6 @@ $('#main').addEventListener('input', function(e){
     var id = t.getAttribute('data-text');
     state.draft[id] = t.value; save();
     var btn = document.querySelector('[data-submit="' + id + '"]'); if (btn) btn.disabled = !t.value.trim();
-  }
-  if (t.id === 'bankSearch') {
-    var q = t.value.trim().toLowerCase();
-    document.querySelectorAll('[data-bank]').forEach(function(sec){
-      var any = false;
-      sec.querySelectorAll('tbody tr').forEach(function(tr){ var hit = !q || tr.textContent.toLowerCase().indexOf(q) >= 0; tr.hidden = !hit; any = any || hit; });
-      sec.hidden = !any;
-    });
   }
 });
 render();
