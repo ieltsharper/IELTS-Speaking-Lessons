@@ -1,12 +1,13 @@
-"""Reads an "IELTS Speaking N" handout (.docx) and writes its content as JSON.
+"""Reads an IELTS Speaking workbook (.docx) and writes its content as JSON.
 
-Usage: python -I docx_to_json.py <handout.docx> <out.json>
+Usage: python -I docx_to_json.py <workbook.docx> <out.json>
 
-The handout layout this expects (IELTS_Speaking_1.docx):
-  title lines, "Hướng dẫn sử dụng" (Heading 1), "Phần B ..." (Heading 1),
-  per unit: "Unit N  Name" (Heading 2), "A. Lý thuyết", vocabulary / expansion tables,
-  "Câu mẫu", three 1x1 boxes (Lỗi cần tránh, Chọn cho đúng, Âm cần luyện),
-  "B. Bài tập", Bài tập 1-3 (Heading 3);
+Layout this expects (IELTS_Intensive_Speaking_Lesson_1_Workbook v2.docx):
+  cover lines, "Hướng dẫn sử dụng" (Heading 1), "Phần A/B ..." (Heading 1),
+  per unit: "Unit N  Name" (Heading 2), "A. Lý thuyết" with sub-headings, paragraphs, tables,
+  "Câu mẫu" and 1x1 boxes (Lỗi cần tránh, Chọn cho đúng, Âm cần luyện); "B. Bài tập" with
+  "Bài tập N: ..." (Heading 3). Exercise items are List Paragraphs starting with ●, followed by
+  either labelled lines (Gợi ý:, Câu ngắn:, ...) or A/B/C options;
   "Phụ lục: Ngân hàng câu hỏi Part 1" (Heading 1) with one table per topic;
   "Đáp án" (Heading 1) with the same units and exercises in the same order.
 Bold and italic runs are kept as <b> and <i>.
@@ -76,6 +77,7 @@ def to_html(runs):
         if b:
             e = f'<b>{e}</b>'
         s += e
+    s = re.sub(r'</b><b>|</i><i>', '', s)
     return re.sub(r'\s+', ' ', s).strip()
 
 
@@ -90,10 +92,17 @@ def level_of(text):
 
 DOT = r'\s*●+\s*'
 SAY = r'\s*Nói to\s*☐\s*$'
+LABELS = (('Gợi ý:', 'hint'), ('Câu ngắn:', 'short'), ('Mở rộng:', 'expand'), ('Dùng:', 'use'),
+          ('Câu nghe như học thuộc:', 'rote'), ('Đặc điểm cá nhân:', 'trait'))
+OPTION = re.compile(r'([ABC])\s{2,}(.*?)(?=\s{3,}[ABC]\s{2,}|$)')
 
 
 def cell_paras(cell):
     return [runs_of(p) for p in cell.paragraphs if p.text.strip()]
+
+
+def cell_html(cell):
+    return '<br>'.join(to_html(r) for r in cell_paras(cell))
 
 
 def main(src, dst):
@@ -103,192 +112,193 @@ def main(src, dst):
         tag = el.tag.split('}')[1]
         if tag == 'p':
             p = Paragraph(el, d)
-            if not p.text.strip():
-                continue
-            style = p.style.name if p.style is not None else ''
-            blocks.append(('p', style, p))
+            if p.text.strip():
+                blocks.append(('p', p.style.name if p.style is not None else '', p))
         elif tag == 'tbl':
             blocks.append(('t', '', Table(el, d)))
 
-    data = {'cover': [], 'guide': [], 'units': [], 'bankIntro': [], 'bank': []}
-    section = 'cover'  # cover, guide, units, bank, key
-    unit = None
-    part = None  # theory heading or exercise key
-    key_unit = None
-    key_ex = None
+    data = {'cover': [], 'guide': [], 'parts': [], 'units': [], 'bankIntro': [], 'bank': []}
+    section = 'cover'
+    unit = ex = None
+    part = None
+    key_unit = key_ex = pending = None
     key_idx = 0
-    pending = None  # current exercise item (questions) or answer item (key)
 
-    def unit_by_name(text):
-        m = re.match(r'Unit\s+(\d+)', text)
-        return next(u for u in data['units'] if u['num'] == int(m.group(1)))
+    def unit_by_num(text):
+        n = int(re.match(r'Unit\s+(\d+)', text).group(1))
+        return next(u for u in data['units'] if u['num'] == n)
 
     for kind, style, obj in blocks:
-        if kind == 'p':
-            text = obj.text.strip()
-            runs = runs_of(obj)
+        text = obj.text.strip() if kind == 'p' else ''
+        runs = runs_of(obj) if kind == 'p' else []
+
         if kind == 'p' and style == 'Heading 1':
             if text.startswith('Hướng dẫn'):
-                section = 'guide'
-                data['guideTitle'] = text
-            elif text.startswith('Phần B'):
+                section, data['guideTitle'] = 'guide', text
+            elif text.startswith('Phần'):
                 section = 'units'
-                data['unitsTitle'] = re.sub(r'\s+', ' ', text)
+                data['parts'].append({'title': re.sub(r'\s+', ' ', text), 'units': []})
             elif text.startswith('Phụ lục'):
-                section = 'bank'
-                data['bankTitle'] = text
+                section, data['bankTitle'] = 'bank', text
             elif text.startswith('Đáp án'):
                 section = 'key'
             continue
 
         if section == 'cover':
-            if kind == 'p' and text != 'Mục lục':
+            if text != 'Mục lục':
                 data['cover'].append(text)
             continue
 
         if section == 'guide':
-            if kind == 'p':
-                if style == 'List Paragraph':
-                    data['guide'].append({'type': 'li', 'html': to_html(runs)})
-                elif all(b for _, b, _ in runs) or len(text) < 60 and not text.endswith('.'):
-                    data['guide'].append({'type': 'h', 'html': to_html(runs)})
-                else:
-                    data['guide'].append({'type': 'p', 'html': to_html(runs)})
+            if style == 'List Paragraph':
+                data['guide'].append({'type': 'li', 'html': to_html(runs)})
+            elif all(b for _, b, _ in runs) or len(text) < 60 and not text.endswith('.'):
+                data['guide'].append({'type': 'h', 'html': to_html(runs)})
+            else:
+                data['guide'].append({'type': 'p', 'html': to_html(runs)})
             continue
 
         if section == 'units':
             if kind == 'p' and style == 'Heading 2':
                 m = re.match(r'Unit\s+(\d+)\s+(.*)', text)
-                unit = {'num': int(m.group(1)), 'name': m.group(2).strip(), 'purpose': [],
-                        'vocab': [], 'expandFormula': '', 'expand': [], 'samples': [],
-                        'mistakes': [], 'choose': [], 'sounds': {'lines': [], 'tip': ''},
-                        'ex': {'1': {'intro': '', 'items': []}, '2': {'intro': '', 'items': []},
-                               '3': {'intro': '', 'items': []}}}
+                unit = {'num': int(m.group(1)), 'name': m.group(2).strip(), 'theory': [], 'exercises': []}
                 data['units'].append(unit)
+                data['parts'][-1]['units'].append(unit['num'])
                 part = None
                 continue
             if kind == 'p' and style == 'Heading 3':
-                m = re.match(r'Bài tập (\d)', text)
-                if m:
-                    part = 'ex' + m.group(1)
-                    unit['ex'][m.group(1)]['title'] = text
+                if re.match(r'Bài tập \d', text):
+                    part = 'ex'
+                    ex = {'title': text, 'intro': '', 'items': []}
+                    unit['exercises'].append(ex)
                 else:
                     part = 'theory' if text.startswith('A.') else 'exhead'
                 continue
-            if kind == 't':
-                rows = obj.rows
-                if len(rows) == 1 and len(obj.columns) == 1:
-                    paras = cell_paras(obj.cell(0, 0))
-                    head = plain(paras[0])
-                    body = paras[1:]
-                    if head.startswith('Lỗi'):
-                        for j in range(0, len(body), 3):
-                            unit['mistakes'].append({
-                                'bad': to_html(strip_prefix(body[j], r'\s*✗\s*')),
-                                'good': to_html(strip_prefix(body[j + 1], r'\s*✓\s*')),
-                                'note': to_html(body[j + 2])})
-                    elif head.startswith('Chọn'):
-                        for j in range(0, len(body), 2):
-                            unit['choose'].append({'h': plain(body[j]), 'html': to_html(body[j + 1])})
-                    elif head.startswith('Âm'):
-                        unit['sounds']['lines'] = [to_html(r) for r in body[:-1]]
-                        unit['sounds']['tip'] = to_html(body[-1])
-                    else:
-                        raise SystemExit(f'Unknown box: {head}')
-                elif plain(runs_of(obj.cell(0, 0).paragraphs[0])) == 'Cụm từ':
-                    for r in rows[1:]:
-                        c = [cell_paras(x)[0] for x in r.cells]
-                        unit['vocab'].append({'level': level_of(plain(c[0])),
-                                              'phrase': plain(strip_prefix(c[0], DOT)),
-                                              'meaning': plain(c[1]), 'example': to_html(c[2])})
-                else:
-                    for r in rows[1:]:
-                        c = [cell_paras(x)[0] for x in r.cells]
-                        q, short = plain(c[0]).split(' → ', 1)
-                        unit['expand'].append({'q': q, 'short': short, 'tech': plain(c[1]),
-                                               'answer': to_html(c[2])})
-                continue
-            # paragraphs inside a unit
             if part == 'theory':
-                if text in ('Mục đích', 'Từ vựng hay cho chủ đề', 'Từ câu ngắn đến câu trả lời đầy đủ',
-                            'Câu mẫu'):
-                    unit['_sub'] = text
-                elif unit.get('_sub') == 'Mục đích':
-                    unit['purpose'].append(to_html(runs))
-                elif unit.get('_sub') == 'Từ câu ngắn đến câu trả lời đầy đủ':
-                    unit['expandFormula'] = to_html(runs)
-                elif unit.get('_sub') == 'Câu mẫu':
-                    q, a = text.split(' → ', 1)
-                    unit['samples'].append({'q': q, 'a': a})
+                th = unit['theory']
+                if kind == 't':
+                    if len(obj.rows) == 1 and len(obj.columns) == 1:
+                        paras = cell_paras(obj.cell(0, 0))
+                        head, body = plain(paras[0]), paras[1:]
+                        if head.startswith('Lỗi'):
+                            th.append({'type': 'mistakes', 'items': [
+                                {'bad': to_html(strip_prefix(body[j], r'\s*✗\s*')),
+                                 'good': to_html(strip_prefix(body[j + 1], r'\s*✓\s*')),
+                                 'note': to_html(body[j + 2])} for j in range(0, len(body), 3)]})
+                        elif head.startswith('Chọn'):
+                            th.append({'type': 'choose', 'items': [
+                                {'h': to_html(body[j]), 'html': to_html(body[j + 1])}
+                                for j in range(0, len(body), 2)]})
+                        elif head.startswith('Âm'):
+                            th.append({'type': 'sounds', 'lines': [to_html(r) for r in body[:-1]],
+                                       'tip': to_html(body[-1])})
+                        else:
+                            raise SystemExit(f'Unknown box: {head}')
+                    else:
+                        head = [plain(cell_paras(c)[0]) for c in obj.rows[0].cells]
+                        rows = []
+                        for r in obj.rows[1:]:
+                            cells = [cell_html(c) for c in r.cells]
+                            first = plain(cell_paras(r.cells[0])[0]) if cell_paras(r.cells[0]) else ''
+                            lv = level_of(first)
+                            if lv:
+                                cells[0] = re.sub(r'^●+\s*', '', cells[0])
+                            rows.append({'level': lv, 'cells': cells})
+                        th.append({'type': 'table', 'head': head, 'rows': rows})
+                elif style == 'List Paragraph':
+                    if not th or th[-1]['type'] != 'samples':
+                        th.append({'type': 'samples', 'items': []})
+                    th[-1]['items'].append(to_html(runs))
+                elif all(b for _, b, _ in runs) or (len(text) < 70 and not text.endswith('.')):
+                    th.append({'type': 'sub', 'text': text})
                 else:
-                    raise SystemExit(f'Unplaced theory text: {text}')
-            elif part and part.startswith('ex'):
-                ex = unit['ex'][part[2]]
+                    th.append({'type': 'p', 'html': to_html(runs)})
+                continue
+            if part == 'ex':
                 if style == 'List Paragraph':
                     r2 = strip_suffix(strip_prefix(runs, DOT), SAY)
+                    m = re.match(r'\s*Examiner(?:\s*\((Q\d+)\))?:\s*', plain(r2))
                     item = {'level': level_of(text)}
-                    if part == 'ex1':
-                        item['cue'] = to_html(r2)
+                    if m:
+                        item['q'] = plain(r2)[m.end():]
+                        if m.group(1):
+                            item['qnum'] = m.group(1)
                     else:
-                        item['q'] = plain(strip_prefix(r2, r'\s*Examiner:\s*'))
+                        item['cue'] = to_html(r2)
                     ex['items'].append(item)
                 elif not ex['items']:
                     ex['intro'] = to_html(runs)
                 else:
                     item = ex['items'][-1]
-                    for label, k in (('Gợi ý:', 'hint'), ('Câu ngắn:', 'short'),
-                                     ('Mở rộng:', 'expand'), ('Dùng:', 'use')):
+                    if re.match(r'[ABC]\s{2,}', text):
+                        item.setdefault('options', []).extend(
+                            {'letter': a, 'text': re.sub(r'\s+', ' ', t).strip()}
+                            for a, t in OPTION.findall(text))
+                        continue
+                    for label, k in LABELS:
                         if text.startswith(label):
-                            item[k] = to_html(strip_prefix(runs, r'\s*' + label + r'\s*'))
+                            item[k] = to_html(strip_prefix(runs, r'\s*' + re.escape(label) + r'\s*'))
                             break
                     else:
                         raise SystemExit(f'Unknown exercise line: {text}')
-            else:
-                raise SystemExit(f'Unplaced unit text: {text}')
-            continue
+                continue
+            raise SystemExit(f'Unplaced unit text: {text}')
 
         if section == 'bank':
             if kind == 'p' and style == 'Heading 3':
-                data['bank'].append({'topic': text, 'rows': []})
+                data['bank'].append({'topic': text, 'head': [], 'rows': []})
             elif kind == 'p':
                 data['bankIntro'].append(to_html(runs))
             else:
+                data['bank'][-1]['head'] = [plain(cell_paras(c)[0]) for c in obj.rows[0].cells]
                 for r in obj.rows[1:]:
-                    data['bank'][-1]['rows'].append([to_html(cell_paras(x)[0]) if cell_paras(x) else ''
-                                                     for x in r.cells])
+                    data['bank'][-1]['rows'].append([cell_html(c) for c in r.cells])
             continue
 
         if section == 'key':
-            if kind == 'p' and re.match(r'Unit\s+\d+', text) and style != 'List Paragraph':
-                key_unit = unit_by_name(text)
+            if style != 'List Paragraph' and style != 'Heading 3' and re.match(r'Unit\s+\d+', text):
+                key_unit = unit_by_num(text)
                 continue
-            if kind == 'p' and style == 'Heading 3':
-                key_ex = key_unit['ex'][re.match(r'Bài tập (\d)', text).group(1)]
+            if style == 'Heading 3':
+                n = int(re.match(r'Bài tập (\d)', text).group(1))
+                key_ex = key_unit['exercises'][n - 1]
                 key_idx = 0
                 continue
             if style == 'List Paragraph':
                 pending = key_ex['items'][key_idx]
                 key_idx += 1
-                lv = level_of(text)
-                if lv != pending['level']:
+                if level_of(text) != pending['level']:
                     raise SystemExit(f'Level mismatch in key: {text}')
-                r2 = strip_prefix(strip_prefix(runs, DOT), r'\s*Câu mẫu:\s*')
-                pending['answer'] = to_html(r2)
+                r2 = strip_prefix(runs, DOT)
+                m = re.match(r'\s*([ABC])\s{2,}', ''.join(t for t, _, _ in r2))
+                if 'options' in pending:
+                    if not m:
+                        raise SystemExit(f'Option key expected: {text}')
+                    pending['correct'] = m.group(1)
+                    pending['note'] = to_html(strip_prefix(r2, r'\s*[ABC]\s{2,}'))
+                else:
+                    pending['answer'] = to_html(strip_prefix(r2, r'\s*Câu mẫu:\s*'))
+                    pending['model'] = plain(r2).startswith('Câu mẫu:')
             elif text.startswith('Cũng chấp nhận:'):
                 pending['alt'] = to_html(strip_prefix(runs, r'\s*Cũng chấp nhận:\s*'))
             else:
                 pending['note'] = to_html(runs)
 
     for u in data['units']:
-        u.pop('_sub', None)
-        for n, ex in u['ex'].items():
-            for it in ex['items']:
-                if 'answer' not in it:
+        for n, e in enumerate(u['exercises'], 1):
+            for it in e['items']:
+                if 'answer' not in it and 'correct' not in it:
                     raise SystemExit(f'No answer: Unit {u["num"]} Bài tập {n}: {it}')
+                if 'options' in it and len(it['options']) != 3:
+                    raise SystemExit(f'Options: Unit {u["num"]} Bài tập {n}: {it}')
+                # Read-aloud items: a plain sentence, nothing to write.
+                it['kind'] = ('choice' if 'options' in it
+                              else 'read' if 'cue' in it and 'hint' not in it else 'write')
     with open(dst, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
-    counts = {u['num']: [len(u['ex'][k]['items']) for k in '123'] for u in data['units']}
-    print('units', counts, 'bank', [(b['topic'], len(b['rows'])) for b in data['bank']])
+    print('units', {u['num']: [(len(e['items']), sorted({i['kind'] for i in e['items']}))
+                               for e in u['exercises']] for u in data['units']})
+    print('bank', [(b['topic'], len(b['rows'])) for b in data['bank']])
 
 
 if __name__ == '__main__':

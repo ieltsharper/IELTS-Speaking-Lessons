@@ -119,8 +119,6 @@ textarea{width:100%;min-height:58px;resize:vertical;border:1px solid var(--line-
 .btn.primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
 .btn.primary:hover{background:var(--brand-hover)}
 .btn[aria-pressed="true"]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
-.btn.rec[aria-pressed="true"]{background:var(--no-soft);border-color:var(--no);color:var(--no)}
-audio{height:32px;max-width:260px}
 .answer{margin-top:10px;border-top:1px dashed var(--line-strong);padding-top:10px}
 .answer .main{font-weight:600}
 .answer .alt{margin-top:6px}
@@ -138,6 +136,19 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
   body{background:#fff}
   .item,.card{break-inside:avoid}
 }
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.opts{display:grid;gap:6px;margin:10px 0 0 38px}
+.opt{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:8px 12px;cursor:pointer;background:var(--page)}
+.opt:hover{background:var(--brand-soft)}
+.opt input{margin-top:5px;accent-color:var(--brand)}
+.opt b{min-width:1.2em}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.wrong{border-color:var(--no);background:var(--no-soft)}
+.verdict{font-weight:700;margin-bottom:4px}
+.verdict.ok{color:var(--ok)}.verdict.no{color:var(--no)}
+.mine{background:var(--page);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px;white-space:pre-wrap}
+.part-title{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.read-cue{font-size:1.08rem}
 </style>
 </head>
 <body>
@@ -152,17 +163,15 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
     <div class="hero">
       <p class="eyebrow">Speaking · Part 1</p>
       <h1 id="title"></h1>
-      <p class="standfirst" id="sub1"></p>
-      <p class="standfirst" id="sub2"></p>
-      <p class="standfirst small" id="sub3"></p>
+      <div id="cover"></div>
       <div class="progress-all"><span id="progressText"></span><div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
-        <button class="btn" id="reset" type="button">Xoá tiến độ</button></div>
+        <button class="btn" id="reset" type="button">Xoá bài đã làm</button></div>
     </div>
   </div>
 </header>
 <nav class="tabs" aria-label="Các phần"><div class="wrap" id="tabs"></div></nav>
 <main><div class="wrap" id="main"></div></main>
-<footer><div class="wrap">Bài làm và đánh dấu “Nói to” chỉ được lưu trên trình duyệt này. Ghi âm không được lưu hay gửi đi đâu.</div></footer>
+<footer><div class="wrap">Câu bạn nộp được lưu trên trình duyệt này để bạn so với đáp án; không gửi đi đâu.</div></footer>
 
 <script type="application/json" id="data">__DATA__</script>
 <script>
@@ -171,89 +180,55 @@ footer{color:var(--muted);font-size:.85rem;padding:20px 0 40px;border-top:1px so
 var D = JSON.parse(document.getElementById('data').textContent);
 var STORE = '__STORE__';
 var state = load();
-function load(){ try { return JSON.parse(localStorage.getItem(STORE)) || {said:{}, text:{}}; } catch(e){ return {said:{}, text:{}}; } }
+function blank(){ return {draft:{}, sub:{}, choice:{}, seen:{}}; }
+function load(){ try { var s = JSON.parse(localStorage.getItem(STORE)); return s && s.sub ? s : blank(); } catch(e){ return blank(); } }
 function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){} }
 
 var $ = function(s, r){ return (r||document).querySelector(s); };
-function el(tag, attrs, html){
-  var e = document.createElement(tag);
-  if (attrs) for (var k in attrs) { if (k === 'class') e.className = attrs[k]; else e.setAttribute(k, attrs[k]); }
-  if (html != null) e.innerHTML = html;
-  return e;
-}
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 function dots(n){ return n ? '<span class="lv" title="Cấp độ ' + n + '">' + '●'.repeat(n) + '</span>' : ''; }
 function textOf(html){ var t = document.createElement('div'); t.innerHTML = html; return t.textContent; }
 
-/* ---------- speech (browser voice) ---------- */
+/* ---------- browser voice for the English examples ---------- */
 var voice = null;
 function pickVoice(){
-  if (!('speechSynthesis' in window)) return;
   var vs = speechSynthesis.getVoices();
   voice = vs.find(function(v){ return v.lang === 'en-GB'; }) || vs.find(function(v){ return /^en/.test(v.lang); }) || null;
 }
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 function say(text){
-  if (!('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
   var u = new SpeechSynthesisUtterance(text);
   u.lang = voice ? voice.lang : 'en-GB'; if (voice) u.voice = voice; u.rate = 0.95;
   speechSynthesis.speak(u);
 }
 function speakBtn(text){
-  if (!('speechSynthesis' in window)) return '';
+  if (!('speechSynthesis' in window) || !text) return '';
   return '<button type="button" class="speak" data-say="' + esc(text) + '" aria-label="Nghe: ' + esc(text) + '" title="Nghe">🔊</button>';
 }
 document.addEventListener('click', function(e){
   var b = e.target.closest('[data-say]'); if (b) say(b.getAttribute('data-say'));
 });
 
-/* ---------- recording ---------- */
-var rec = null;
-function toggleRecord(btn, holder){
-  if (rec && rec.btn === btn) { rec.mr.stop(); return; }
-  if (rec) rec.mr.stop();
-  if (!navigator.mediaDevices || !window.MediaRecorder) { alert('Trình duyệt này không hỗ trợ ghi âm.'); return; }
-  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-    var mr = new MediaRecorder(stream), chunks = [];
-    mr.ondataavailable = function(ev){ chunks.push(ev.data); };
-    mr.onstop = function(){
-      stream.getTracks().forEach(function(t){ t.stop(); });
-      var a = holder.querySelector('audio'); if (a) { URL.revokeObjectURL(a.src); a.remove(); }
-      a = el('audio', {controls:'', 'aria-label':'Bản ghi của bạn'});
-      a.src = URL.createObjectURL(new Blob(chunks, {type: mr.mimeType || 'audio/webm'}));
-      holder.appendChild(a);
-      btn.setAttribute('aria-pressed', 'false'); btn.textContent = '🎙 Ghi âm lại';
-      rec = null;
-    };
-    mr.start(); rec = {mr: mr, btn: btn};
-    btn.setAttribute('aria-pressed', 'true'); btn.textContent = '■ Dừng ghi';
-  }).catch(function(){ alert('Không mở được micro. Hãy cho phép trình duyệt dùng micro rồi thử lại.'); });
-}
-
 /* ---------- progress ---------- */
-var ALL = [];
-D.units.forEach(function(u){ ['1','2','3'].forEach(function(k){ u.ex[k].items.forEach(function(_, i){ ALL.push(u.num + '-' + k + '-' + i); }); }); });
-function unitDone(u){ var n = 0, t = 0; ['1','2','3'].forEach(function(k){ u.ex[k].items.forEach(function(_, i){ t++; if (state.said[u.num + '-' + k + '-' + i]) n++; }); }); return [n, t]; }
+function ids(u){ var out = []; u.exercises.forEach(function(ex, k){ ex.items.forEach(function(_, i){ out.push(u.num + '-' + (k + 1) + '-' + i); }); }); return out; }
+function isDone(id){ return !!(state.sub[id] || state.choice[id] || state.seen[id]); }
+var ALL = [].concat.apply([], D.units.map(ids));
 function updateProgress(){
-  var n = ALL.filter(function(id){ return state.said[id]; }).length;
-  $('#progressText').textContent = 'Đã nói to ' + n + '/' + ALL.length + ' câu';
+  var n = ALL.filter(isDone).length;
+  $('#progressText').textContent = 'Đã làm ' + n + '/' + ALL.length + ' câu';
   $('#progressBar').style.width = (100 * n / ALL.length) + '%';
-  D.units.forEach(function(u){
-    var t = document.querySelector('[data-unit-count="' + u.num + '"]');
-    if (t) { var c = unitDone(u); t.textContent = c[0] + '/' + c[1]; }
-  });
 }
 $('#reset').addEventListener('click', function(){
-  if (!confirm('Xoá toàn bộ câu đã viết và đánh dấu “Nói to” trên trình duyệt này?')) return;
-  state = {said:{}, text:{}}; save(); render();
+  if (!confirm('Xoá toàn bộ câu đã viết, đã nộp và đã chọn trên trình duyệt này?')) return;
+  state = blank(); save(); render();
 });
 
 /* ---------- header and tabs ---------- */
 $('#title').textContent = D.cover[0];
-$('#sub1').textContent = D.cover[1] || '';
-$('#sub2').textContent = D.cover[2] || '';
-$('#sub3').textContent = D.cover[3] || '';
+$('#cover').innerHTML = D.cover.slice(1).map(function(c, i, a){
+  return '<p class="standfirst' + (i === a.length - 1 ? ' small' : '') + '">' + esc(c) + '</p>';
+}).join('');
 var TABS = [{id:'huong-dan', label:'Hướng dẫn'}];
 D.units.forEach(function(u){ TABS.push({id:'unit-' + u.num, label:'Unit ' + u.num + ' · ' + u.name, unit:u}); });
 TABS.push({id:'ngan-hang', label:'Ngân hàng câu hỏi'});
@@ -266,97 +241,139 @@ function route(){
 }
 var filter = 0;
 
-/* ---------- pages ---------- */
+/* ---------- guide ---------- */
 function renderGuide(){
-  var s = '<h2>' + esc(D.guideTitle) + '</h2>';
-  var open = false, card = '';
+  var s = '<h2>' + esc(D.guideTitle) + '</h2>', card = '', open = false;
+  function flush(){ if (open) { card += '</ul>'; open = false; } if (card) s += '<div class="card">' + card + '</div>'; card = ''; }
   D.guide.forEach(function(b){
-    if (b.type === 'h') { if (card) s += '<div class="card">' + card + '</div>'; card = '<h4>' + b.html + '</h4>'; open = false; }
+    if (b.type === 'h') { flush(); card = '<h4>' + b.html + '</h4>'; }
     else if (b.type === 'li') { if (!open) { card += '<ul class="plain">'; open = true; } card += '<li>' + b.html + '</li>'; }
     else { if (open) { card += '</ul>'; open = false; } card += '<p>' + b.html + '</p>'; }
   });
-  if (open) card += '</ul>';
-  if (card) s += '<div class="card">' + card + '</div>';
-  s += '<h3>' + esc(D.unitsTitle) + '</h3><div class="boxes">' + D.units.map(function(u){
-    var c = unitDone(u);
-    return '<a class="card" style="text-decoration:none;color:inherit;display:block" href="#unit-' + u.num + '"><h4 style="color:var(--heading)">Unit ' + u.num + ' · ' + esc(u.name) + '</h4><span class="note">Đã nói to <span data-unit-count="' + u.num + '">' + c[0] + '/' + c[1] + '</span> câu</span></a>';
-  }).join('') + '</div>';
+  flush();
+  D.parts.forEach(function(p){
+    s += '<p class="part-title">' + esc(p.title) + '</p><div class="boxes">' + p.units.map(function(n){
+      var u = D.units.find(function(x){ return x.num === n; });
+      var all = ids(u), done = all.filter(isDone).length;
+      return '<a class="card" style="text-decoration:none;color:inherit;display:block;margin:0" href="#unit-' + n + '"><h4 style="color:var(--heading)">Unit ' + n + ' · ' + esc(u.name) + '</h4><span class="note">Đã làm ' + done + '/' + all.length + ' câu</span></a>';
+    }).join('') + '</div>';
+  });
   return s;
 }
 
+/* ---------- theory ---------- */
+function renderTable(b){
+  var vocab = b.head[0] === 'Cụm từ', speakLast = vocab || /câu trả lời mở rộng/i.test(b.head[b.head.length - 1]);
+  var rows = b.rows.filter(function(r){ return !filter || !r.level || r.level === filter; });
+  return '<div class="tablewrap"><table><thead><tr>' + b.head.map(function(h){ return '<th scope="col">' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    rows.map(function(r){
+      return '<tr>' + r.cells.map(function(c, i){
+        if (i === 0 && vocab) return '<td class="phrase">' + dots(r.level) + ' ' + c + '</td>';
+        if (i === r.cells.length - 1 && speakLast) return '<td>' + c + speakBtn(textOf(c)) + '</td>';
+        return '<td' + (vocab && i === 1 ? ' class="muted"' : '') + '>' + c + '</td>';
+      }).join('') + '</tr>';
+    }).join('') + '</tbody></table></div>';
+}
+function sampleSpeech(html){
+  var t = textOf(html), i = t.indexOf(' → ');
+  if (i >= 0) t = t.slice(i + 3);
+  return t.replace(/\s*\([^)]*\)\s*$/, '').replace(/\s*\/[^\/\s]+\/\s*/g, ' ');
+}
 function renderTheory(u){
-  var s = '';
-  s += '<div class="card"><h4>Mục đích</h4>' + u.purpose.map(function(p){ return '<p>' + p + '</p>'; }).join('') + '</div>';
-  s += '<h3>Từ vựng hay cho chủ đề</h3><div class="tablewrap"><table><thead><tr><th scope="col">Cụm từ</th><th scope="col">Nghĩa</th><th scope="col">Ví dụ khi nói</th></tr></thead><tbody>' +
-    u.vocab.filter(function(v){ return !filter || v.level === filter; }).map(function(v){
-      return '<tr><td class="phrase">' + dots(v.level) + ' ' + esc(v.phrase) + '</td><td class="muted">' + esc(v.meaning) + '</td><td>' + v.example + speakBtn(textOf(v.example)) + '</td></tr>';
-    }).join('') + '</tbody></table></div>';
-  s += '<h3>Từ câu ngắn đến câu trả lời đầy đủ</h3><p class="formula">' + u.expandFormula + '</p><div class="tablewrap"><table><thead><tr><th scope="col">Câu hỏi + câu trả lời ngắn</th><th scope="col">Kỹ thuật</th><th scope="col">Câu trả lời mở rộng</th></tr></thead><tbody>' +
-    u.expand.map(function(x){
-      return '<tr><td><b>' + esc(x.q) + '</b><br><span class="muted">→ ' + esc(x.short) + '</span></td><td class="muted">' + esc(x.tech) + '</td><td>' + x.answer + speakBtn(textOf(x.answer)) + '</td></tr>';
-    }).join('') + '</tbody></table></div>';
-  s += '<h3>Câu mẫu</h3><div class="card">' + u.samples.map(function(x){
-    return '<div class="sample"><div class="q">' + esc(x.q) + '</div><div>→ ' + esc(x.a) + speakBtn(x.a) + '</div></div>';
-  }).join('') + '</div>';
-  s += '<div class="boxes">';
-  s += '<div class="card box"><h4>Lỗi cần tránh</h4>' + u.mistakes.map(function(m){
-    return '<div class="mistake"><div class="bad">' + m.bad + '</div><div class="good">' + m.good + '</div><div class="note">' + m.note + '</div></div>';
-  }).join('') + '</div>';
-  s += '<div class="card box"><h4>Chọn cho đúng</h4>' + u.choose.map(function(c){
-    return '<div class="mistake"><div><b>' + esc(c.h) + '</b></div><div class="note">' + c.html + '</div></div>';
-  }).join('') + '</div>';
-  s += '<div class="card box"><h4>Âm cần luyện</h4>' + u.sounds.lines.map(function(l){ return '<p>' + l + '</p>'; }).join('') + '<p class="note">' + u.sounds.tip + '</p></div>';
-  s += '</div>';
+  var s = '', boxes = [];
+  u.theory.forEach(function(b){
+    if (b.type === 'sub') s += '<h3>' + esc(b.text) + '</h3>';
+    else if (b.type === 'p') s += '<p>' + b.html + '</p>';
+    else if (b.type === 'table') s += renderTable(b);
+    else if (b.type === 'samples') s += '<div class="card">' + b.items.map(function(x){ return '<div class="sample">' + x + speakBtn(sampleSpeech(x)) + '</div>'; }).join('') + '</div>';
+    else if (b.type === 'mistakes') boxes.push('<div class="card box"><h4>Lỗi cần tránh</h4>' + b.items.map(function(m){
+      return '<div class="mistake"><div class="bad">' + m.bad + '</div><div class="good">' + m.good + '</div><div class="note">' + m.note + '</div></div>';
+    }).join('') + '</div>');
+    else if (b.type === 'choose') boxes.push('<div class="card box"><h4>Chọn cho đúng</h4>' + b.items.map(function(c){
+      return '<div class="mistake"><div>' + c.h + '</div><div class="note">' + c.html + '</div></div>';
+    }).join('') + '</div>');
+    else if (b.type === 'sounds') boxes.push('<div class="card box"><h4>Âm cần luyện</h4>' + b.lines.map(function(l){ return '<p>' + l + '</p>'; }).join('') + '<p class="note">' + b.tip + '</p></div>');
+  });
+  // The first "Mục đích" block goes in a card.
+  s = s.replace(/^<h3>Mục đích<\/h3>((?:<p>[\s\S]*?<\/p>)+)/, '<div class="card"><h4>Mục đích</h4>$1</div>');
+  if (boxes.length) s += '<div class="boxes" style="margin-top:20px">' + boxes.join('') + '</div>';
   return s;
 }
 
+/* ---------- exercises ---------- */
+var LINES = [['short', 'Câu ngắn'], ['expand', 'Mở rộng'], ['rote', 'Câu nghe như học thuộc'], ['trait', 'Đặc điểm cá nhân'], ['use', 'Dùng'], ['hint', 'Gợi ý']];
+function answerHtml(it, id){
+  var s = '';
+  if (state.sub[id]) s += '<div class="note">Câu bạn đã nộp:</div><div class="mine" lang="en">' + esc(state.sub[id]) + '</div>';
+  s += '<div class="main">' + (it.model ? '<span class="label">Câu mẫu:</span> ' : '<span class="label">Đáp án:</span> ') + it.answer + speakBtn(textOf(it.answer)) + '</div>';
+  if (it.alt) s += '<div class="alt"><span class="label">Cũng chấp nhận:</span> ' + it.alt + speakBtn(textOf(it.alt)) + '</div>';
+  if (it.note) s += '<div class="note" style="margin-top:6px">' + it.note + '</div>';
+  return s;
+}
+function choiceResult(it, id){
+  var pick = state.choice[id];
+  return '<div class="verdict ' + (pick === it.correct ? 'ok">✓ Đúng' : 'no">✗ Chưa đúng. Đáp án: ' + it.correct) + '</div><div class="note">' + it.note + '</div>';
+}
+function renderItem(it, id, i){
+  var head = it.q != null
+    ? '<span class="cue"><span class="examiner">Examiner' + (it.qnum ? ' (' + it.qnum + ')' : '') + ':</span>' + esc(it.q) + speakBtn(it.q) + '</span>'
+    : '<span class="cue' + (it.kind === 'read' ? ' read-cue' : '') + '">' + it.cue + (it.kind === 'read' ? speakBtn(textOf(it.cue)) : '') + '</span>';
+  var lines = LINES.filter(function(l){ return it[l[0]]; }).map(function(l){
+    return '<div><span class="label">' + l[1] + ':</span> ' + (l[0] === 'hint' ? '<span class="hint">' + it.hint + '</span>' : it[l[0]]) + '</div>';
+  }).join('');
+  var s = '<div class="item' + (isDone(id) ? ' done' : '') + '" data-id="' + id + '">' +
+    '<div class="item-head"><span class="num">' + (i + 1) + '</span>' + dots(it.level) + head + '</div>' +
+    (lines ? '<div class="lines">' + lines + '</div>' : '');
+  if (it.kind === 'choice') {
+    var pick = state.choice[id];
+    s += '<div class="opts" role="radiogroup" aria-label="Chọn A, B hoặc C">' + it.options.map(function(o){
+      var cls = pick ? (o.letter === it.correct ? ' right' : o.letter === pick ? ' wrong' : '') : '';
+      return '<label class="opt' + cls + '"><input type="radio" name="c-' + id + '" value="' + o.letter + '"' + (pick === o.letter ? ' checked' : '') + '><b>' + o.letter + '</b><span lang="en">' + esc(o.text) + '</span></label>';
+    }).join('') + '</div><div class="work"><div class="actions"><button type="button" class="btn primary" data-choose="' + id + '"' + (pick ? '' : ' disabled') + '>' + (pick ? 'Nộp lại' : 'Nộp') + '</button></div>' +
+      '<div class="answer" id="a-' + id + '"' + (pick ? '' : ' hidden') + '>' + (pick ? choiceResult(it, id) : '') + '</div></div>';
+  } else if (it.kind === 'read') {
+    var seen = !!state.seen[id];
+    s += '<div class="work"><div class="actions"><button type="button" class="btn primary" data-see="' + id + '" aria-expanded="' + seen + '">' + (seen ? 'Ẩn đáp án' : 'Xem đáp án') + '</button></div>' +
+      '<div class="answer" id="a-' + id + '"' + (seen ? '' : ' hidden') + '>' + answerHtml(it, id) + '</div></div>';
+  } else {
+    var draft = state.draft[id] != null ? state.draft[id] : (state.sub[id] || '');
+    var sub = !!state.sub[id];
+    s += '<div class="work"><label class="note" for="t-' + id + '">Viết câu trả lời của bạn</label>' +
+      '<textarea id="t-' + id + '" data-text="' + id + '" rows="2" spellcheck="true" lang="en">' + esc(draft) + '</textarea>' +
+      '<div class="actions"><button type="button" class="btn primary" data-submit="' + id + '"' + (draft.trim() ? '' : ' disabled') + '>' + (sub ? 'Nộp lại' : 'Nộp') + '</button>' +
+      (sub ? '' : '<span class="note">Nộp câu của bạn để xem đáp án.</span>') + '</div>' +
+      '<div class="answer" id="a-' + id + '"' + (sub ? '' : ' hidden') + '>' + (sub ? answerHtml(it, id) : '') + '</div></div>';
+  }
+  return s + '</div>';
+}
+function findItem(id){
+  var p = id.split('-'), u = D.units.find(function(x){ return x.num === +p[0]; });
+  return u.exercises[+p[1] - 1].items[+p[2]];
+}
 function renderExercise(u, k){
-  var ex = u.ex[k];
-  var s = '<h3>' + esc(ex.title) + '</h3><p class="lede">' + ex.intro + '</p>';
-  var shown = 0;
+  var ex = u.exercises[k - 1];
+  var s = '<h3>' + esc(ex.title) + '</h3><p class="lede">' + ex.intro + '</p>', shown = 0;
   ex.items.forEach(function(it, i){
     if (filter && it.level !== filter) return;
     shown++;
-    var id = u.num + '-' + k + '-' + i;
-    var said = !!state.said[id];
-    var head = k === '1' ? '<span class="cue">' + it.cue + '</span>'
-                         : '<span class="cue"><span class="examiner">Examiner:</span>' + esc(it.q) + speakBtn(it.q) + '</span>';
-    var lines = '';
-    if (it.short) lines += '<div><span class="label">Câu ngắn:</span> ' + it.short + '</div>';
-    if (it.expand) lines += '<div><span class="label">Mở rộng:</span> ' + it.expand + '</div>';
-    if (it.use) lines += '<div><span class="label">Dùng:</span> ' + it.use + '</div>';
-    if (it.hint) lines += '<div><span class="label">Gợi ý:</span> <span class="hint">' + it.hint + '</span></div>';
-    var ans = '<div class="main">' + (k === '3' ? '<span class="label">Câu mẫu:</span> ' : '') + it.answer + speakBtn(textOf(it.answer)) + '</div>';
-    if (it.alt) ans += '<div class="alt"><span class="label">Cũng chấp nhận:</span> ' + it.alt + speakBtn(textOf(it.alt)) + '</div>';
-    if (it.note) ans += '<div class="note" style="margin-top:6px">' + it.note + '</div>';
-    s += '<div class="item' + (said ? ' done' : '') + '" data-id="' + id + '">' +
-      '<div class="item-head"><span class="num">' + (i + 1) + '</span>' + dots(it.level) + head + '</div>' +
-      '<div class="lines">' + lines + '</div>' +
-      '<div class="work"><label class="note" for="t-' + id + '">Viết lại câu bạn đã nói</label>' +
-      '<textarea id="t-' + id + '" data-text="' + id + '" rows="2" spellcheck="true" lang="en">' + esc(state.text[id] || '') + '</textarea>' +
-      '<div class="actions">' +
-        '<button type="button" class="btn" data-said="' + id + '" aria-pressed="' + said + '">' + (said ? '✓ Đã nói to' : 'Nói to ☐') + '</button>' +
-        '<button type="button" class="btn rec" data-rec aria-pressed="false">🎙 Ghi âm</button>' +
-        '<span class="rec-holder"></span>' +
-        '<button type="button" class="btn primary" data-reveal="a-' + id + '" aria-expanded="false" aria-controls="a-' + id + '">Xem đáp án</button>' +
-      '</div>' +
-      '<div class="answer" id="a-' + id + '" hidden>' + ans + '</div></div></div>';
+    s += renderItem(it, u.num + '-' + k + '-' + i, i);
   });
   if (!shown) s += '<p class="empty">Không có câu nào ở cấp độ này.</p>';
   return s;
 }
 
 function renderUnit(u, part){
-  var parts = [['ly-thuyet', 'A. Lý thuyết'], ['bai-tap-1', 'Bài tập 1'], ['bai-tap-2', 'Bài tập 2'], ['bai-tap-3', 'Bài tập 3']];
+  var parts = [['ly-thuyet', 'A. Lý thuyết']].concat(u.exercises.map(function(_, k){ return ['bai-tap-' + (k + 1), 'Bài tập ' + (k + 1)]; }));
+  if (!parts.some(function(p){ return p[0] === part; })) part = 'ly-thuyet';
   var s = '<h2>Unit ' + u.num + ' · ' + esc(u.name) + '</h2>';
   s += '<div class="subnav" role="group" aria-label="Phần của Unit">' + parts.map(function(p){
-    return '<a class="chip" style="text-decoration:none" href="#unit-' + u.num + '/' + p[0] + '" aria-pressed="' + (p[0] === part) + '">' + p[1] + '</a>';
+    var n = p[0] === 'ly-thuyet' ? '' : (function(){ var k = +p[0].slice(-1), all = u.exercises[k - 1].items.map(function(_, i){ return u.num + '-' + k + '-' + i; }); return ' <small>' + all.filter(isDone).length + '/' + all.length + '</small>'; })();
+    return '<a class="chip" style="text-decoration:none" href="#unit-' + u.num + '/' + p[0] + '" aria-pressed="' + (p[0] === part) + '">' + p[1] + n + '</a>';
   }).join('') + '<span class="filter-label">Cấp độ:</span>' +
     [[0, 'Tất cả'], [1, '● 5.0-6.0'], [2, '●● 6.0-6.5'], [3, '●●● 7.0-7.5']].map(function(f){
       return '<button type="button" class="chip" data-filter="' + f[0] + '" aria-pressed="' + (filter === f[0]) + '">' + f[1] + '</button>';
     }).join('') + '</div>';
-  if (part === 'ly-thuyet') s += renderTheory(u);
-  else s += renderExercise(u, part.slice(-1));
+  s += part === 'ly-thuyet' ? renderTheory(u) : renderExercise(u, +part.slice(-1));
   var i = parts.findIndex(function(p){ return p[0] === part; });
   if (i < parts.length - 1) s += '<p style="text-align:right"><a class="btn primary" style="text-decoration:none;display:inline-block" href="#unit-' + u.num + '/' + parts[i + 1][0] + '">Tiếp: ' + parts[i + 1][1] + ' →</a></p>';
   return s;
@@ -366,8 +383,8 @@ function renderBank(){
   var s = '<h2>' + esc(D.bankTitle) + '</h2>' + D.bankIntro.map(function(p){ return '<p class="lede">' + p + '</p>'; }).join('');
   s += '<input class="search" type="search" id="bankSearch" placeholder="Tìm câu hỏi hoặc từ vựng…" aria-label="Tìm trong ngân hàng câu hỏi">';
   D.bank.forEach(function(b){
-    s += '<div data-bank><h3>' + esc(b.topic) + '</h3><div class="tablewrap"><table><thead><tr><th scope="col">Câu hỏi</th><th scope="col">Câu mở đầu gợi ý</th><th scope="col">Từ vựng nên dùng</th></tr></thead><tbody>' +
-      b.rows.map(function(r){ return '<tr><td><b>' + r[0] + '</b>' + speakBtn(textOf(r[0])) + '</td><td>' + r[1] + '</td><td class="muted">' + r[2] + '</td></tr>'; }).join('') +
+    s += '<div data-bank><h3>' + esc(b.topic) + '</h3><div class="tablewrap"><table><thead><tr>' + b.head.map(function(h){ return '<th scope="col">' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      b.rows.map(function(r){ return '<tr><td><b>' + r[0] + '</b>' + speakBtn(textOf(r[0]).replace(/^\d+\.\s*/, '')) + '</td><td>' + r[1] + '</td><td class="muted">' + r[2] + '</td></tr>'; }).join('') +
       '</tbody></table></div></div>';
   });
   return s;
@@ -379,41 +396,67 @@ function render(){
     if (a.getAttribute('href') === '#' + r.tab.id) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
   var m = $('#main');
-  if (r.tab.unit) m.innerHTML = renderUnit(r.tab.unit, /^(ly-thuyet|bai-tap-[123])$/.test(r.part) ? r.part : 'ly-thuyet');
+  if (r.tab.unit) m.innerHTML = renderUnit(r.tab.unit, r.part);
   else if (r.tab.id === 'ngan-hang') m.innerHTML = renderBank();
   else m.innerHTML = renderGuide();
   updateProgress();
 }
+function rerenderItem(id){
+  var old = document.querySelector('.item[data-id="' + id + '"]'), p = id.split('-');
+  var tmp = document.createElement('div');
+  tmp.innerHTML = renderItem(findItem(id), id, +p[2]);
+  old.replaceWith(tmp.firstChild);
+  updateProgress();
+  var chip = document.querySelector('.subnav a[aria-pressed="true"] small');
+  if (chip) { var ex = D.units.find(function(x){ return x.num === +p[0]; }).exercises[+p[1] - 1];
+    chip.textContent = ex.items.filter(function(_, i){ return isDone(p[0] + '-' + p[1] + '-' + i); }).length + '/' + ex.items.length; }
+}
 
 /* ---------- events ---------- */
-var lastTab = null;
+var lastTab = route().tab.id;
 window.addEventListener('hashchange', function(){
-  if (rec) rec.mr.stop();
   render();
   var t = route().tab.id;
   window.scrollTo(0, t === lastTab ? Math.min(window.scrollY, $('nav.tabs').offsetTop) : 0);
   lastTab = t;
 });
 $('#main').addEventListener('click', function(e){
-  var b;
+  var b, id;
   if ((b = e.target.closest('[data-filter]'))) { filter = +b.getAttribute('data-filter'); var y = window.scrollY; render(); window.scrollTo(0, y); return; }
-  if ((b = e.target.closest('[data-said]'))) {
-    var id = b.getAttribute('data-said'), on = !state.said[id];
-    if (on) state.said[id] = 1; else delete state.said[id];
-    save();
-    b.setAttribute('aria-pressed', on); b.textContent = on ? '✓ Đã nói to' : 'Nói to ☐';
-    b.closest('.item').classList.toggle('done', on);
-    updateProgress(); return;
+  if ((b = e.target.closest('[data-submit]'))) {
+    id = b.getAttribute('data-submit');
+    var t = document.getElementById('t-' + id).value.trim();
+    if (!t) return;
+    state.sub[id] = t; delete state.draft[id]; save(); rerenderItem(id);
+    var a = document.getElementById('a-' + id); if (a) a.scrollIntoView({block: 'nearest'});
+    return;
   }
-  if ((b = e.target.closest('[data-reveal]'))) {
-    var a = document.getElementById(b.getAttribute('data-reveal')), open = a.hidden;
-    a.hidden = !open; b.setAttribute('aria-expanded', open); b.textContent = open ? 'Ẩn đáp án' : 'Xem đáp án'; return;
+  if ((b = e.target.closest('[data-choose]'))) {
+    id = b.getAttribute('data-choose');
+    var r = document.querySelector('input[name="c-' + id + '"]:checked');
+    if (!r) return;
+    state.choice[id] = r.value; save(); rerenderItem(id); return;
   }
-  if ((b = e.target.closest('[data-rec]'))) { toggleRecord(b, b.parentNode.querySelector('.rec-holder')); }
+  if ((b = e.target.closest('[data-see]'))) {
+    id = b.getAttribute('data-see');
+    if (state.seen[id]) delete state.seen[id]; else state.seen[id] = 1;
+    save(); rerenderItem(id);
+  }
+});
+$('#main').addEventListener('change', function(e){
+  var t = e.target;
+  if (t.matches('input[type="radio"]')) {
+    var id = t.name.slice(2), btn = document.querySelector('[data-choose="' + id + '"]');
+    if (btn) btn.disabled = false;
+  }
 });
 $('#main').addEventListener('input', function(e){
   var t = e.target;
-  if (t.matches('[data-text]')) { var id = t.getAttribute('data-text'); if (t.value) state.text[id] = t.value; else delete state.text[id]; save(); }
+  if (t.matches('[data-text]')) {
+    var id = t.getAttribute('data-text');
+    state.draft[id] = t.value; save();
+    var btn = document.querySelector('[data-submit="' + id + '"]'); if (btn) btn.disabled = !t.value.trim();
+  }
   if (t.id === 'bankSearch') {
     var q = t.value.trim().toLowerCase();
     document.querySelectorAll('[data-bank]').forEach(function(sec){
@@ -423,7 +466,6 @@ $('#main').addEventListener('input', function(e){
     });
   }
 });
-lastTab = route().tab.id;
 render();
 })();
 </script>
