@@ -112,6 +112,43 @@ def apply_english(data, en):
         raise SystemExit('No English for: ' + ' | '.join(missing))
 
 
+def new_answers(data, answers, theory):
+    """The teacher's rewritten samples: item Suggestions by 'unit-exercise-n', and exact text swaps
+    inside the theory examples. Fails if a key or an old text is not found."""
+    found = set()
+    for u in data['units']:
+        for k, ex in enumerate(u['exercises'], 1):
+            for it in ex['items']:
+                key = f"{u['num']}-{k}-{it['n']}"
+                if key in answers:
+                    it['answer'] = answers[key]
+                    it.pop('alt', None)
+                    found.add(key)
+    missing = set(answers) - found
+    if missing:
+        raise SystemExit('answers: no item ' + ', '.join(sorted(missing)))
+    for old, new in theory:
+        hits = 0
+        for u in data['units']:
+            for b in u['theory']:
+                if b['type'] == 'samples':
+                    for i, x in enumerate(b['items']):
+                        head, sep, rest = x.partition(' → ')
+                        tag = re.search(r'\s*<b>\([^)]*\)</b>\s*$', rest)
+                        body = rest[:tag.start()] if tag else rest
+                        if sep and text_of(body).strip() == old:
+                            b['items'][i] = head + sep + new + (tag.group(0) if tag else '')
+                            hits += 1
+                elif b['type'] == 'table':
+                    for r in b['rows']:
+                        for i, c in enumerate(r['cells']):
+                            if text_of(c).strip() == old:
+                                r['cells'][i] = new
+                                hits += 1
+        if not hits:
+            raise SystemExit('theoryReplace: not found: ' + old[:70])
+
+
 def keep_items(data, keep):
     """Shows only the chosen items of an exercise ('unit-exercise': [original numbers])."""
     for u in data['units']:
@@ -161,6 +198,7 @@ def main(src, dst, store, env_path=None):
         apply_english(data, edits.get('en', {}))
         if edits.get('suggestOnly'):
             suggest_only(data)
+        new_answers(data, edits.get('answers', {}), edits.get('theoryReplace', []))
         keep_items(data, edits.get('keep', {}))
     for k in ('bank', 'bankIntro', 'bankTitle'):  # the question bank is not shown (teacher's choice)
         data.pop(k, None)

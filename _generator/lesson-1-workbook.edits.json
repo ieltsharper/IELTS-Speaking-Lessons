@@ -1,5 +1,5 @@
 {
- "_about": "Teacher's changes on top of the .docx (2026-11-01). dropGuide: guide blocks to remove (by exact html). replace: exact text swaps anywhere in the lesson. en: Vietnamese texts shown in English (cover, unit names, headers of English tables, exercise titles, instructions, hints, choice cues). suggestOnly: units >= 2, exercises 2 and 3 show one Suggestion (no alternative). keep: per exercise ('unit-exercise'), the original item numbers (0-based) shown; 2 per level, no question repeated within a unit (teacher chose 6 per exercise).",
+ "_about": "Teacher's changes on top of the .docx (2026-11-01). dropGuide: guide blocks to remove (by exact html). replace: exact text swaps anywhere in the lesson. en: Vietnamese texts shown in English (cover, unit names, headers of English tables, exercise titles, instructions, hints, choice cues). suggestOnly: units >= 2, exercises 2 and 3 show one Suggestion (no alternative). keep: per exercise ('unit-exercise'), the original item numbers (0-based) shown; 2 per level, no question repeated within a unit (teacher chose 6 per exercise). answers: new Suggestions (unit-exercise-n -> html), teacher asked for 3-4 natural sentences (2026-11-03). theoryReplace: same for the theory examples (old answer as plain text -> new html; the question and the bold technique tag are kept).",
  "dropGuide": [
   "Workbook này dùng <b>kèm handout Lesson 1</b> (<i>Approach to IELTS Speaking Part 1</i>). Handout dạy lý thuyết và có bài tập ngắn trên lớp; workbook cho bạn <b>luyện thêm</b> với cùng ba kỹ thuật, cùng từ vựng và cùng danh sách câu hỏi.",
   "<b>Unit 1</b> Phát âm: âm cuối và trọng âm · <b>Unit 2</b> Ba kỹ thuật: 5W1H, Personalisation, Tense control · <b>Unit 3</b> Work or studies · <b>Unit 4</b> Home and accommodation (gồm <i>The area you live in</i>) · <b>Unit 5</b> Hometown · <b>Phụ lục</b> câu hỏi theo số thứ tự trong handout · <b>Đáp án</b>."
@@ -282,5 +282,141 @@
    7,
    8
   ]
- }
+ },
+ "answers": {
+  "2-2-0": "I usually take a nap for about twenty minutes after lunch. It really helps me feel fresh for my afternoon classes. If I sleep any longer, though, I wake up even more tired, so I always set an alarm.",
+  "2-2-1": "Yes, I do, especially shopping for clothes. I usually go with my best friend at the weekend, and we can spend hours just trying things on. To be honest, we often end up buying nothing, but it's still a lot of fun.",
+  "2-2-4": "I like walking around, usually in the evening with my mum. We often stop to watch people dance or play badminton. It's a nice way to unwind after a long day at school.",
+  "2-2-5": "Mostly learning websites, like online dictionaries. I use them almost every night for my homework, especially when I come across a new word. Every now and then, I also read the news in English to pick up some useful phrases.",
+  "2-2-7": "Yes, I have. Last summer I saw the sunrise in Sa Pa, and the mountains were completely covered in clouds. It looked so unreal that I just stood there for ages. I'd love to go back one day.",
+  "2-2-8": "I try to link the name to something. For example, I remember a new classmate called Mai because my aunt has the same name. It sounds a bit silly, but it actually works most of the time.",
+  "2-3-2": "Every single day. I live in an extended family, and my grandma always puts a big plate of fruit on the table after dinner. She buys it fresh from the market every morning, so it's hard to say no.",
+  "2-3-3": "Yes, all the time. I'm preparing for the university entrance exam, so I put on some quiet piano music while I revise. It helps me block out the noise from the street. Songs with lyrics are a no-go, though, because I end up singing along.",
+  "2-3-4": "I try to, but it's easier said than done. I share a room with my younger sister, and her stuff always ends up on my desk. We've agreed to tidy up every Sunday, but it rarely lasts more than two days.",
+  "2-3-5": "Probably a legal database my lecturers recommended. As a first-year law student, I use it almost every day to look up cases. It's not exactly exciting, but it's a real lifesaver before exams.",
+  "2-3-7": "I ride an electric bike to school, so I usually squeeze through the side streets. If that doesn't work, I just put on a podcast and accept that I'll be a bit late. Getting stressed doesn't make the traffic move any faster, after all.",
+  "2-3-9": "Mostly for revision. Since I'm preparing for the university entrance exam, I'd use my tablet every evening for practice tests. I'd only play games once I'd finished; otherwise, I'd never get anything done.",
+  "3-2-1": "I prefer the mornings, because my mind is much fresher. In the afternoons, I often feel sleepy after lunch, so I can't really concentrate. That's why I try to do the hardest subjects, like maths, first thing in the morning.",
+  "3-2-2": "I mostly use my laptop. I look up new words in an online dictionary every night, usually for about an hour. I also watch a few English videos on YouTube when I need a break from textbooks.",
+  "3-2-4": "Yes, I do. I'm hoping to go into higher education in law, and then maybe do a master's degree abroad. Of course, it all depends on my exam results next year, so fingers crossed!",
+  "3-2-5": "I'd like to see more practical lessons. At the moment, most lessons are very exam-focused, so there's no time for critical thinking. It would be great if we could do more group projects or debates instead of just memorising facts.",
+  "3-2-6": "Yes, definitely. I can't wait to earn my own money, although I'm a bit nervous about the pressure of a full-time job. I guess it'll take a while to get used to, but I'm up for the challenge.",
+  "3-2-9": "For me, it's definitely the university entrance exam next summer. I'm working towards a place at a good university, so every hour counts right now. I've even cut down on social media to make more time for revision.",
+  "3-3-0": "I'm in grade 11, so I study about ten subjects. I'm doing well in maths, and I'm <b>making steady progress</b> in English. Literature, on the other hand, is still a real struggle for me.",
+  "3-3-1": "Yes, English is really popular in Vietnam. Lots of students learn it because they want to go into <b>higher education</b> abroad one day. Even my little cousin in primary school has extra English classes!",
+  "3-3-4": "I think the biggest benefit is that young people pick things up quickly. For example, I <b>got the hang of</b> video editing in just a week, while my dad is still struggling with it. We also don't have many responsibilities yet, which is nice.",
+  "3-3-5": "I don't work yet, because I'm still a student. Right now I'm <b>working towards</b> a good score in the university entrance exam. To be honest, that feels like a full-time job in itself!",
+  "3-3-7": "I chose law because I wanted a <b>deep understanding</b> of how society works. I was in the debate club in high school, and my teachers kept saying I'd make a good lawyer. So far, I haven't regretted it at all.",
+  "3-3-8": "Not really. Law is <b>challenging but rewarding</b>, and I've enjoyed it much more since I did an internship last summer. Seeing how a real law firm works made everything we learn in class make sense.",
+  "4-2-0": "I live with my parents and my younger sister. We get on really well, although we argue about the TV sometimes. Dinner is our family time, so we always eat together and catch up on each other's day.",
+  "4-2-1": "I live in an apartment on the twelfth floor of a high-rise building. The view of the city is amazing at night, especially from our balcony. The only downside is waiting for the lift during rush hour!",
+  "4-2-4": "Mostly I study in my room, since I'm preparing for the university entrance exam. At weekends, though, I help my mum cook. It's a nice break from textbooks, and I've picked up a few recipes along the way.",
+  "4-2-5": "About ten years now. We moved there when I was in grade 1, so it's basically the only home I remember. I've grown really attached to it over the years.",
+  "4-2-7": "Yes, I think it's really important, because our living conditions affect our mood. For example, when my room is messy, I just can't focus. A quiet, comfortable home also helps me sleep better, so I'm more productive the next day.",
+  "4-2-8": "It's quite noisy, because we live next to a main road. The traffic starts at around 6 a.m., and the honking goes on until late at night. I've got used to it, but I still use earplugs before big exams.",
+  "4-3-0": "When I was little, we lived in a tube house that was a bit cramped. Now we live in a flat, which is much brighter. We had to <b>make a few adjustments</b>, like getting used to the lift, but now I wouldn't go back.",
+  "4-3-1": "I'd love a small house with a garden, somewhere <b>ideally suited to</b> someone who loves plants, like me. I'd also want a big kitchen, because I enjoy cooking. Nothing fancy, just a cosy place where my friends can drop by.",
+  "4-3-4": "It's quite small, with a bed, a desk and a huge pile of exam books. But it's my own <b>personal space</b>, so I can study without being disturbed. I've also put up some fairy lights, which make it feel really cosy at night.",
+  "4-3-5": "My favourite room is the kitchen, believe it or not. My grandma and I cook there every Sunday, so it's full of <b>shared experiences</b>. Some of my best childhood memories come from that tiny kitchen.",
+  "4-3-7": "Yes, I do. There's a strong <b>local community</b> spirit, and everything I need, like shops and a market, is just a short walk away. The only thing I'd change is the lack of green space.",
+  "4-3-8": "Usually the small park near my building. There's lots of <b>social interaction</b> there in the evenings, with people dancing, playing badminton and chatting. I go there to jog and clear my head after studying.",
+  "5-2-0": "It's a really big city. It's the capital city, and over eight million people live there. It's so busy that you can hardly find a quiet street, even late at night.",
+  "5-2-1": "My whole life. I've lived here since I was born, and I've never lived anywhere else. I've thought about studying abroad, but I can't imagine leaving for good.",
+  "5-2-3": "Yes, I do. I'm proud of its cultural heritage, and all my childhood memories are here. Every corner of the Old Quarter reminds me of something from when I was a kid.",
+  "5-2-4": "What I like most is the street food. There's a food stall on every corner, and everything's cheap and delicious. My go-to is a bowl of bun cha after school; I just can't get enough of it.",
+  "5-2-7": "Yes, I did. Every Mid-Autumn Festival, my grandparents took me to Hang Ma Street to see the lanterns. The whole street was packed with kids and colourful toys. That's how I learned about the local culture.",
+  "5-2-8": "Sure. It's the capital of Vietnam, in the north. It's a mix of old and new, with narrow streets in the Old Quarter and modern skyscrapers in newer districts. It can be chaotic, but it's never boring.",
+  "5-3-0": "Yes, I have. I've learned that the city has a rich <b>historical background</b> and is over a thousand years old. Last year I visited the Temple of Literature, which is often called Vietnam's first university.",
+  "5-3-1": "Yes, I do. I've always lived in a busy <b>urban area</b>, so I'm used to the noise. I love that there's always something going on, even at midnight.",
+  "5-3-4": "It's best known for its street food and its <b>cultural heritage</b>. Tourists love trying pho in the Old Quarter and visiting the old temples around Hoan Kiem Lake. If you ever visit, you should definitely try egg coffee too.",
+  "5-3-5": "Mostly the traffic. <b>Public transport</b> is improving, but it still doesn't reach my area. So I spend about forty minutes a day stuck in traffic on my way to school, which really drives me crazy.",
+  "5-3-7": "Yes, I'd say so. <b>Living standards</b> are higher here than in most provinces, and there are lots of jobs in tech and finance. The only problem is that rent is quite expensive, especially for fresh graduates.",
+  "5-3-8": "Yes, there are loads. Students from all over the country come here for university. That's why coffee shops are always packed and full of <b>social interaction</b>, especially at weekends."
+ },
+ "theoryReplace": [
+  [
+   "Every day, really. I live in an extended family, and my grandma always puts a plate of fruit on the table after dinner.",
+   "Pretty much every day, actually. <b>I live in an extended family</b>, and my grandma always puts a big plate of fruit on the table after dinner. She won't let anyone leave the table until it's gone!"
+  ],
+  [
+   "Yes, definitely. I like watching the rice fields on long bus trips to my grandparents' village.",
+   "Yes, definitely, especially <b>on long bus trips</b>. Whenever I visit <b>my grandparents' village</b>, I love watching the rice fields roll past. It's really relaxing, and it makes the journey feel much shorter."
+  ],
+  [
+   "Yes, I have. Last year I lost my wallet on the bus, and I never got it back.",
+   "Yes, I have, more times than I'd like to admit. Last year I <b>lost</b> my wallet on the bus, and I never got it back. Since then, I<b>'ve been</b> much more careful with my things."
+  ],
+  [
+   "Quite a lot, actually. I'm snowed under with homework this year, and I take extra classes three evenings a week.",
+   "Quite a lot, actually. I'm <b>snowed under with</b> homework this year, and I take extra classes three evenings a week. Honestly, I barely have any free time left, apart from Sunday afternoons."
+  ],
+  [
+   "I mostly use my laptop. I look up new words in an online dictionary every night, for about an hour.",
+   "I mostly use my laptop. I look up new words in an online dictionary every night, for about an hour. Apart from that, my phone is handy for flashcard apps when I'm on the bus."
+  ],
+  [
+   "I don't work yet, because I'm still a student. Right now I'm working towards a good score in the university entrance exam.",
+   "I don't work yet, because I'm still a student. Right now I'm <b>working towards</b> a good score in the university entrance exam. To be honest, that feels like a full-time job in itself!"
+  ],
+  [
+   "Definitely the mornings. My mind's much fresher then, whereas in the afternoons I often feel sleepy after lunch.",
+   "Definitely the mornings. My mind's much fresher then, so I can get through difficult exercises faster. In the afternoons, I often feel sleepy after lunch, so I save that time for easier stuff like vocabulary."
+  ],
+  [
+   "Yes, I do. I'm hoping to go into higher education in law, and then maybe do a master's degree abroad.",
+   "Yes, I do. I'm hoping to go into <b>higher education</b> in law, and then maybe do a master's degree abroad. Of course, it all depends on my exam results next year, so fingers crossed!"
+  ],
+  [
+   "I chose law because I wanted a deep understanding of how society works, and it's challenging but rewarding.",
+   "I chose law because I wanted a <b>deep understanding</b> of how society works. It's <b>challenging but rewarding</b>, especially when we discuss real cases in class. My dad is a lawyer too, so I guess it runs in the family."
+  ],
+  [
+   "I live with my parents and my younger sister. We get on really well, although we argue about the TV sometimes.",
+   "I <b>live with my parents</b> and my younger sister. We <b>get on</b> really well, although we argue about the TV sometimes. Dinner is our family time, so we always eat together and catch up on each other's day."
+  ],
+  [
+   "It's quite noisy, because we live next to a main road. The traffic starts at around 6 a.m.",
+   "It's quite noisy, because we live next to a main road. The traffic starts at around 6 a.m., and the honking goes on until late at night. I've got used to it, but I still use earplugs before big exams."
+  ],
+  [
+   "About ten years now. We moved there when I was in grade 1, so it's the only home I really remember.",
+   "About ten years now. We <b>moved</b> there when I was in grade 1, so it's basically the only home I remember. I<b>'ve grown</b> really attached to it over the years."
+  ],
+  [
+   "It's a three-bedroom flat on the twelfth floor. The living conditions are pretty good: it's bright and quiet, and from the balcony we can see a big part of the city.",
+   "It's a three-bedroom flat on the twelfth floor. The <b>living conditions</b> are pretty good: it's bright and quiet, and from the balcony we can see a big part of the city. It's not huge, but it's cosy and suits our family perfectly."
+  ],
+  [
+   "When I was little, we lived in a tube house that was a bit cramped. Now we live in a flat, which is much brighter.",
+   "When I was little, we <b>lived</b> in a tube house that was a bit cramped. Now we <b>live</b> in a flat, which is much brighter and more spacious. I do miss chatting with the neighbours on the street, though."
+  ],
+  [
+   "Yes, most of them are. There's a strong local community spirit, and people often chat outside in the evenings.",
+   "Yes, most of them are. There's a strong <b>local community</b> spirit, and people often chat outside in the evenings. Whenever someone's away, the neighbours keep an eye on their place, which is really nice."
+  ],
+  [
+   "It's a really big city. It's the capital, and over eight million people live there.",
+   "It's a really big city. It's the capital, and over eight million people live there. It's so busy that you can hardly find a quiet street, even late at night."
+  ],
+  [
+   "Yes, I do. I'm proud of its cultural heritage, and all my childhood memories are here.",
+   "Yes, I do. I'm proud of its <b>cultural heritage</b>, and all my childhood memories are here. Every corner of the Old Quarter reminds me of something from when I was a kid."
+  ],
+  [
+   "Yes, I did. Every Mid-Autumn Festival, my grandparents took me to Hang Ma Street to see the lanterns.",
+   "Yes, I did. Every Mid-Autumn Festival, my grandparents <b>took</b> me to Hang Ma Street to see the lanterns. The whole street <b>was</b> packed with kids and colourful toys, and it felt magical."
+  ],
+  [
+   "Sure. Hanoi is the capital of Vietnam. It's a mix of old and new: narrow streets in the Old Quarter and modern skyscrapers in the newer districts.",
+   "Sure. Hanoi is the capital of Vietnam, in the north. It's a mix of old and new: narrow streets in the Old Quarter and modern skyscrapers in the newer districts. It can be chaotic, but it's never boring."
+  ],
+  [
+   "My whole life. I've lived here since I was born, and I've never lived anywhere else.",
+   "My whole life. <b>I've lived</b> here since I was born, and I've never lived anywhere else. I've thought about studying abroad, but I can't imagine leaving for good."
+  ],
+  [
+   "Yes, I'd say so. There are lots of job opportunities. The only problem is the cost of living, which is pretty high.",
+   "Yes, I'd say so. There are plenty of <b>job opportunities</b>, especially in tech and finance. The only problem is the cost of living, which is pretty high for fresh graduates."
+  ]
+ ]
 }
